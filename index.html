@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Вырасти!</title>
+  <style>
+    body { 
+      font-family: sans-serif; 
+      text-align: center; 
+      background: linear-gradient(to top, #c1f0c1, #e6ffe6);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    h1 { margin-bottom: 20px; }
+    #plant { font-size: 80px; margin: 20px; }
+    button { 
+      font-size: 20px; 
+      padding: 10px 20px; 
+      border: none; 
+      border-radius: 10px; 
+      background: #4caf50; 
+      color: white; 
+      cursor: pointer; 
+    }
+    button:hover { background: #45a049; }
+  </style>
+</head>
+<body>
+  <h1>🌱 Игра "Вырасти"</h1>
+  <div id="plant">🌱</div>
+  <button onclick="grow()">Полить 🌊</button>
+
+  <script>
+    let stage = 0;
+    const plants = ["🌱","🌿","🌳","🌲"];
+    function grow() {
+      if (stage < plants.length - 1) stage++;
+      document.getElementById("plant").innerText = plants[stage];
+
+      // Отправляем результат обратно в Телеграм
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.sendData(JSON.stringify({ stage }));
+      }
+    }
+  </script>
+</body>
+</html>
