@@ -134,7 +134,6 @@ function updateUI(){
         plantEl.querySelector('.progress i').style.width=(b.plant.progress||0)+'%';
         plantEl.querySelector('.stage').textContent=Math.floor(b.plant.progress||0)+'%';
       }
-      // Анимация роста моркови
       const scale=0.5+0.5*(b.plant.progress/100);
       el.querySelector('.plant .emoji').style.transform=`scale(${scale})`;
     }
@@ -173,8 +172,9 @@ function waterBed(){
   if(selectedBed===null){showToast('Выберите грядку');return;}
   const b=garden[selectedBed];
   if(!b.plant){showToast('Нет растения');return;}
-  if(water<=0){showToast('Воды нет');return;}
-  b.plant.progress=Math.min(100,(b.plant.progress||0)+50); 
+  if(water <= 0){showToast('Воды нет');return;}
+  water--; // теперь вода уменьшается
+  b.plant.progress = Math.min(100, (b.plant.progress || 0) + 50); 
   updateUI();
 }
 
