@@ -82,7 +82,7 @@ header{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-
 <script>
 const GARDEN_SIZE=8;
 const garden=[];
-const inventory=[];
+let inventory=[];
 let selectedBed=null;
 let money=parseInt(localStorage.getItem('money'))||20;
 let seeds=parseInt(localStorage.getItem('seeds'))||1;
@@ -143,17 +143,19 @@ function updateUI(){
 }
 
 function createBeds(){
-  const savedGarden=JSON.parse(localStorage.getItem('garden')||'[]');
-  const savedInventory=JSON.parse(localStorage.getItem('inventory')||'[]');
-  savedInventory.forEach(i=>inventory.push(i));
-  for(let i=0;i<GARDEN_SIZE;i++){
-    const bed={plant:savedGarden[i]||null, progress:(savedGarden[i]?.progress||0)};
+  const savedGarden = JSON.parse(localStorage.getItem('garden') || '[]');
+  const savedInventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+  inventory = []; // очищаем инвентарь перед загрузкой
+  savedInventory.forEach(i => inventory.push(i));
+  
+  for(let i = 0; i < GARDEN_SIZE; i++){
+    const bed = {plant: savedGarden[i] || null, progress: (savedGarden[i]?.progress || 0)};
     garden.push(bed);
-    const div=document.createElement('div');
-    div.className='bed';
-    div.id='bed-'+i;
-    div.innerHTML='<div class="soil">Пусто</div>';
-    div.addEventListener('click',()=>{selectedBed=i;updateUI();});
+    const div = document.createElement('div');
+    div.className = 'bed';
+    div.id = 'bed-' + i;
+    div.innerHTML = '<div class="soil">Пусто</div>';
+    div.addEventListener('click', () => { selectedBed = i; updateUI(); });
     gardenEl.appendChild(div);
   }
 }
@@ -173,7 +175,7 @@ function waterBed(){
   const b=garden[selectedBed];
   if(!b.plant){showToast('Нет растения');return;}
   if(water <= 0){showToast('Воды нет');return;}
-  water--; // теперь вода уменьшается
+  water--;
   b.plant.progress = Math.min(100, (b.plant.progress || 0) + 50); 
   updateUI();
 }
@@ -225,21 +227,17 @@ function renderSell(){
   document.getElementById('sellAllShop').addEventListener('click',()=>{if(inventory.length>0){money+=10*inventory.length;inventory.length=0;updateUI();}else{showToast('Инвентарь пуст');}});
 }
 
-// По умолчанию вкладка Shop
 renderShop();
-
 tabShop.addEventListener('click',renderShop);
 tabSell.addEventListener('click',renderSell);
 
 document.getElementById('openShop').addEventListener('click',()=>{shop.classList.add('open');});
 document.getElementById('closeShop').addEventListener('click',()=>{shop.classList.remove('open');});
 
-// Inventory
 const inventoryModal=document.getElementById('inventory');
 document.getElementById('openInventory').addEventListener('click',()=>{inventoryModal.classList.add('open');});
 document.getElementById('closeInventory').addEventListener('click',()=>{inventoryModal.classList.remove('open');});
 
-// Settings
 const settings=document.getElementById('settings');
 document.getElementById('openSettings').addEventListener('click',()=>{settings.classList.add('open');});
 document.getElementById('closeSettings').addEventListener('click',()=>{settings.classList.remove('open');});
