@@ -1,167 +1,391 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-  <title>🌱 Ферма</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f0f8f5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100vh;
-      overflow: hidden;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Вырасти сад — версия 7</title>
+<style>
+:root{
+  --bg:#f6fff6;--panel:#fff;--accent:#2e8b2e;--muted:#556;
+  --glass:rgba(255,255,255,0.7);
+  --btn-radius:10px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Roboto,Arial;background:linear-gradient(180deg,#e9f7ec 0%, #f6fff6 100%);color:#123;min-height:100vh;display:flex;flex-direction:column}
+.header{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.title{font-weight:700;color:var(--accent);font-size:20px;display:flex;gap:8px;align-items:center}
+.controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+button{background:var(--panel);border:1px solid rgba(0,0,0,0.06);padding:8px 10px;border-radius:var(--btn-radius);cursor:pointer}
+.container{display:flex;gap:12px;padding:12px;flex:1}
+.left{flex:1}
+.grid{display:grid;grid-template-columns:repeat(5,92px);grid-auto-rows:92px;gap:10px;padding:8px}
+.plot{background:linear-gradient(180deg,#dfece2,#cfe6d3);border-radius:12px;box-shadow:0 8px 18px rgba(0,0,0,0.06);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s ease}
+.plot:active{transform:translateY(3px)}
+.label{position:absolute;bottom:6px;font-size:11px;color:var(--muted);width:100%;text-align:center;padding:0 6px}
+.progress{position:absolute;top:6px;left:6px;right:6px;height:6px;background:rgba(255,255,255,0.6);border-radius:6px;overflow:hidden;box-shadow:inset 0 -1px 0 rgba(0,0,0,0.05)}
+.progress-bar{height:100%;background:linear-gradient(90deg,#7ed957,#2e8b2e);width:0%;transition:width .4s ease}
+.icon-seed{width:18px;height:18px;border-radius:50%;background:#8b5a2b;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.12)}
+.icon-sprout{width:28px;height:28px;background:linear-gradient(#6cd06c,#2e8b2e);border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,0.06)}
+.mature-emoji{font-size:30px}
+.mutations-line{position:absolute;top:10px;left:8px;display:flex;gap:6px;font-size:16px}
+.mutation-bubble{background:rgba(255,255,255,0.8);padding:2px 6px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.06);font-size:13px}
 
-    header {
-      width: 100%;
-      padding: 10px;
-      background: #4caf50;
-      color: white;
-      text-align: center;
-      font-size: 18px;
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
+.toast{position:fixed;right:18px;top:18px;background:var(--panel);padding:10px 12px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,0.12);min-width:180px;opacity:0;transform:translateY(-8px);transition:all .28s ease;pointer-events:none;z-index:60}
+.toast.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.sidebar{width:360px;background:var(--panel);padding:12px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.06);height:fit-content;transition:transform .28s ease}
+.sidebar.hidden{transform:translateX(110%);opacity:0}
+.section{margin-bottom:12px}
+.section h3{margin:0 0 8px 0;font-size:15px;color:#234}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed rgba(0,0,0,0.04)}
+.small{font-size:13px;color:var(--muted)}
+.footer{padding:10px 16px;color:var(--muted);font-size:13px}
+.tooltip{position:fixed;background:var(--panel);padding:8px 10px;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,0.12);font-size:13px;z-index:70;max-width:240px;display:none}
+.achievements{display:flex;flex-direction:column;gap:6px}
+.achievement{background:#f7fff7;border-radius:8px;padding:6px 8px;border:1px solid rgba(0,0,0,0.04)}
 
-    main {
-      margin-top: 60px; /* отступ под хедер */
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      overflow-y: auto;
-    }
-
-    .garden {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
-      width: 90%;
-      max-width: 400px;
-    }
-
-    .plot {
-      width: 100%;
-      aspect-ratio: 1 / 1; /* квадратные грядки */
-      background: #c2b280;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .buttons {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    button {
-      padding: 8px 12px;
-      font-size: 14px;
-      border: none;
-      border-radius: 6px;
-      background: #4caf50;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:active {
-      background: #388e3c;
-    }
-
-    /* Магазин */
-    .shop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .shop-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 300px;
-      width: 90%;
-      position: relative;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 5px;
-      right: 10px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 25px;
-      height: 25px;
-      cursor: pointer;
-    }
-  </style>
+/* responsive */
+@media(max-width:920px){
+  .container{flex-direction:column}
+  .sidebar{width:100%;position:fixed;bottom:0;left:0;right:0;border-radius:12px 12px 0 0;transform:translateY(100%);opacity:0}
+  .sidebar.open{transform:translateY(0);opacity:1}
+  .grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:76px}
+  .header{padding:8px}
+  .tooltip{font-size:14px}
+}
+</style>
 </head>
 <body>
-  <header>🌱 Ферма — 100 монет</header>
 
-  <main>
-    <div class="garden">
-      <div class="plot">+</div>
-      <div class="plot">+</div>
-      <div class="plot">+</div>
-      <div class="plot">+</div>
-      <div class="plot">+</div>
-      <div class="plot">+</div>
-    </div>
-
-    <div class="buttons">
-      <button onclick="openShop()">🛒 Магазин</button>
-      <button onclick="water()">💧 Полить</button>
-      <button onclick="plant()">🌱 Посадить</button>
-    </div>
-  </main>
-
-  <!-- Магазин -->
-  <div class="shop" id="shop">
-    <div class="shop-content">
-      <button class="close-btn" onclick="closeShop()">×</button>
-      <h3>Магазин</h3>
-      <p>Здесь можно покупать семена и улучшения.</p>
+<div class="header">
+  <div class="title">Вырасти сад 🌱 — v7</div>
+  <div class="controls">
+    <div style="display:flex;gap:8px">
+      <button id="btnPlant">Посадить</button>
+      <button id="btnWater">Полить</button>
+      <button id="btnHarvest">Собрать</button>
+      <button id="btnShopToggle">Магазин</button>
     </div>
   </div>
+</div>
 
-  <script>
-    function openShop() {
-      document.getElementById('shop').style.display = 'flex';
-    }
+<div class="container">
+  <div class="left">
+    <div id="grid" class="grid" aria-label="Сад"></div>
+  </div>
 
-    function closeShop() {
-      document.getElementById('shop').style.display = 'none';
-    }
+  <aside id="sidebar" class="sidebar">
+    <div class="section">
+      <h3>Инвентарь</h3>
+      <div class="row"><span class="small">Семена</span><strong id="seeds">0</strong></div>
+      <div class="row"><span class="small">Вода</span><strong id="water">0</strong></div>
+      <div class="row"><span class="small">Урожай</span><strong id="harvest">0</strong></div>
+      <div class="row"><span class="small">Золото</span><strong id="gold">0</strong></div>
+      <div class="row"><span class="small">XP</span><strong id="xp">0</strong></div>
+      <div class="row"><span class="small">Уровень</span><strong id="level">1</strong></div>
+    </div>
 
-    function water() {
-      alert("Вы полили грядки!");
-    }
+    <div class="section" id="shop-section">
+      <h3>Магазин</h3>
+      <div class="row"><span>Продать 1 урожай → <strong id="sellPrice">3</strong> золота</span><button id="sell1">Продать 1</button></div>
+      <div class="row"><span>Продать всё → x3</span><button id="sellAll">Продать всё</button></div>
+      <div class="row"><span>Купить семя: <strong id="seedPrice">2</strong> золота</span><button id="buySeed">Купить</button></div>
+      <div class="row"><span>Купить воду: <strong id="waterPrice">1</strong> золото</span><button id="buyWater">Купить</button></div>
+    </div>
 
-    function plant() {
-      alert("Вы посадили семена!");
+    <div class="section">
+      <h3>Достижения</h3>
+      <div class="achievements" id="achievementsList"></div>
+    </div>
+
+    <div class="section">
+      <h3>Настройки</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="btnSwitchMode">Сменить режим (ПК/Телефон)</button>
+        <button id="export">Экспорт</button>
+        <button id="import">Импорт</button>
+        <button id="reset">Сброс</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="tooltip" class="tooltip"></div>
+<div class="footer">Сохранение в localStorage. Поддерживается множественные мутации, tooltip при наведении/тапе, достижения и уровни.</div>
+
+<script>
+/* ===== конфигурация ===== */
+const TOTAL_DESKTOP = 15; // 5x3
+const TOTAL_MOBILE = 12;  // 4x3
+const PRICES = { sellPerHarvest: 3, buySeed: 2, buyWater: 1 };
+const XP_PER_HARVEST = 5;
+const XP_PER_LEVEL = 50;
+const MUTATION_CHANCES = { gold: 0.10, fire: 0.03, ice: 0.03, rainbow: 0.01 };
+const NORMAL_BONUS_CHANCE = 0.50;
+
+/* типы растений */
+const PLANT_TYPES = [
+  {id:'flower', name:'Цветок', chance:0.30, sell:4, bonusSeeds:1, bonusHarvest:1, growMultiplier:1, emoji:'🌸'},
+  {id:'corn', name:'Кукуруза', chance:0.20, sell:5, bonusSeeds:0, bonusHarvest:2, growMultiplier:1, emoji:'🌽'},
+  {id:'tree', name:'Дерево', chance:0.10, sell:10, bonusSeeds:0, bonusHarvest:3, growMultiplier:2, emoji:'🌳'}
+];
+const DEFAULT_TYPE = {id:'grass', name:'Трава', chance:0.40, sell:2, bonusSeeds:0, bonusHarvest:1, growMultiplier:1, emoji:'🌱'};
+
+/* ===== состояние ===== */
+let MODE = localStorage.getItem('garden_mode') || null; // 'desktop' or 'mobile'
+let TOTAL = TOTAL_DESKTOP;
+let state = {
+  seeds:5, water:5, harvest:0, gold:0, xp:0, level:1,
+  plots: [], achievements: {}, stats: {harvested:0,mutants:0}, effects:{fireBoostUntil:0, frozenUntil:0}
+};
+
+/* ===== DOM ===== */
+const gridEl = document.getElementById('grid');
+const seedsEl = document.getElementById('seeds');
+const waterEl = document.getElementById('water');
+const harvestEl = document.getElementById('harvest');
+const goldEl = document.getElementById('gold');
+const xpEl = document.getElementById('xp');
+const levelEl = document.getElementById('level');
+const toastEl = document.getElementById('toast');
+const tooltipEl = document.getElementById('tooltip');
+const sidebar = document.getElementById('sidebar');
+const btnShopToggle = document.getElementById('btnShopToggle');
+const achievementsList = document.getElementById('achievementsList');
+const btnPlant = document.getElementById('btnPlant');
+const btnWater = document.getElementById('btnWater');
+const btnHarvest = document.getElementById('btnHarvest');
+
+/* ===== audio ===== */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const audioCtx = AudioCtx ? new AudioCtx() : null;
+function beep(freq=440, time=0.08, type='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=0.12; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+time); o.stop(audioCtx.currentTime+time+0.02); }
+
+/* ===== achievements definitions ===== */
+const ACHIEVEMENTS_DEF = [
+  {id:'firstHarvest', title:'Первый урожай', desc:'Собрать 1 урожай', check: s=>s.stats.harvested>=1, reward: ()=>{ state.seeds+=1; state.water+=1; showToast('Награда: +1 семя, +1 вода'); }},
+  {id:'farmer20', title:'Фермер', desc:'Собрать 20 урожая', check: s=>s.stats.harvested>=20, reward: ()=>{ state.gold+=10; showToast('Награда: +10 золота'); }},
+  {id:'mutantCollector', title:'Коллекционер мутантов', desc:'Получить 5 мутантов', check: s=>s.stats.mutants>=5, reward: ()=>{ state.seeds+=3; showToast('Награда: +3 семян'); }},
+  {id:'rich100', title:'Миллионер', desc:'Накопить 100 золота', check: s=>s.gold>=100, reward: ()=>{ state.water+=5; showToast('Награда: +5 воды'); }},
+];
+
+/* ===== helpers ===== */
+function now(){ return Date.now(); }
+function save(){ localStorage.setItem('garden_v7', JSON.stringify({state,MODE,TOTAL})); }
+function load(){ const s = localStorage.getItem('garden_v7'); if(s){ try{ const parsed = JSON.parse(s); if(parsed && parsed.state && parsed.MODE){ state = parsed.state; MODE = parsed.MODE; TOTAL = parsed.TOTAL || TOTAL_DESKTOP; return true; } }catch(e){ console.warn('load failed',e); } } return false; }
+function showToast(text){ toastEl.textContent = text; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'),3000); }
+function triggerSound(t){ if(t==='plant') beep(660,0.06,'triangle'); if(t==='water') beep(520,0.06,'sine'); if(t==='harvest') beep(880,0.08,'sawtooth'); if(t==='sell') beep(480,0.06,'sine'); if(t==='error') beep(220,0.06,'sine'); }
+
+function pickPlantType(){ const r=Math.random(); let acc=0; for(const t of PLANT_TYPES){ acc+=t.chance; if(r<acc) return t; } return DEFAULT_TYPE; }
+
+/* ===== UI: render plots ===== */
+function render(){
+  gridEl.innerHTML='';
+  for(let i=0;i<TOTAL;i++){
+    const p = state.plots[i] || {stage:0,progress:0,mutations:[],type:null};
+    const el = document.createElement('div'); el.className='plot'; el.dataset.index=i;
+    let inner='';
+    if(p.stage===0){ inner='<div class="label">пусто</div>'; }
+    else {
+      const t = p.type || DEFAULT_TYPE;
+      if(p.stage===1) inner = '<div class="icon-seed" title="'+t.name+'"></div><div class="label">'+t.name+'</div>';
+      if(p.stage===2) inner = '<div class="icon-sprout" title="'+t.name+'"></div><div class="label">'+t.name+'</div>';
+      if(p.stage===3){
+        // show mutations as bubbles and emoji for type
+        const muts = (p.mutations && p.mutations.length) ? p.mutations.map(m=>m.icon).join(' ') : '';
+        let emoji = t.emoji || '🌿';
+        inner = '<div style="font-size:34px">'+emoji+'</div><div class="label">'+t.name+'</div>';
+        if(p.mutations && p.mutations.length){
+          inner += '<div class="mutations-line">'+ p.mutations.map(m=>'<div class="mutation-bubble" title="'+m.name+'">'+m.icon+'</div>').join('') +'</div>';
+        }
+      }
+      if(p.stage>0 && p.stage<3) inner += '<div class="progress"><div class="progress-bar" style="width:'+Math.min(100,p.progress)+'%"></div></div>';
     }
-  </script>
+    el.innerHTML = inner;
+    el.addEventListener('click', (ev)=>onPlotClick(i, ev, el));
+    el.addEventListener('mouseenter', (ev)=>showTooltipFor(i, ev, el));
+    el.addEventListener('mouseleave', hideTooltip);
+    el.addEventListener('touchstart', (ev)=>{ showTooltipFor(i, ev, el); setTimeout(()=>hideTooltip(),2500); });
+    gridEl.appendChild(el);
+  }
+  renderAchievements();
+}
+
+/* ===== tooltip ===== */
+function showTooltipFor(i, ev, el){
+  const p = state.plots[i] || {stage:0};
+  if(!p || p.stage===0){ tooltipEl.style.display='none'; return; }
+  let html = '<strong>'+(p.type? p.type.name : 'Растение') +'</strong><br/>';
+  html += 'Стадия: '+ (p.stage===1? 'семя' : p.stage===2? 'росток' : 'зрелое') + '<br/>';
+  if(p.stage>0 && p.stage<3) html += 'Прогресс: '+Math.round(p.progress)+'%<br/>';
+  if(p.mutations && p.mutations.length){ html += '<br/><em>Мутации:</em><br/>' + p.mutations.map(m=>m.icon+' '+m.name+': '+m.desc).join('<br/>'); }
+  tooltipEl.innerHTML = html;
+  tooltipEl.style.display = 'block';
+  const x = ev.touches ? ev.touches[0].clientX : ev.clientX;
+  const y = ev.touches ? ev.touches[0].clientY : ev.clientY;
+  tooltipEl.style.left = (x+12) + 'px';
+  tooltipEl.style.top = (y+12) + 'px';
+}
+function hideTooltip(){ tooltipEl.style.display='none'; tooltipEl.innerHTML=''; }
+
+/* ===== interactions ===== */
+function onPlotClick(i, ev, el){
+  const p = state.plots[i];
+  if(!p) return;
+  if(p.stage===0){ // plant
+    if(state.seeds<=0){ showToast('Нет семян'); triggerSound('error'); return; }
+    state.seeds--; p.stage=1; p.progress=0; p.mutations=[]; p.type = pickPlantType(); save(); render(); updateUI(); showToast('Посажено: '+p.type.name); triggerSound('plant'); return;
+  }
+  if(p.stage===3){ // harvest
+    const t = p.type || DEFAULT_TYPE;
+    const harvestAmount = t.bonusHarvest || 1;
+    state.harvest += harvestAmount;
+    state.stats.harvested += harvestAmount;
+    addXP(XP_PER_HARVEST * harvestAmount);
+    // apply mutations effects (multiple allowed)
+    if(p.mutations && p.mutations.length){
+      p.mutations.forEach(m=>{
+        if(m.id==='gold'){ state.seeds += 3; state.water +=5; state.gold +=2; showToast(m.icon+' '+m.name+' дал бонусы'); }
+        if(m.id==='fire'){ state.effects.fireBoostUntil = Math.max(state.effects.fireBoostUntil || 0, now() + 20000); showToast(m.icon+' '+m.name+' ускорил рост (20s)'); }
+        if(m.id==='ice'){ state.effects.frozenUntil = Math.max(state.effects.frozenUntil || 0, now() + 10000); state.gold += 10; showToast(m.icon+' '+m.name+' дал +10 золота и заморозил рост (10s)'); }
+        if(m.id==='rainbow'){ levelUp(); showToast(m.icon+' '+m.name+' дал +1 уровень!'); }
+      });
+    } else {
+      // normal plant bonus chance
+      if(Math.random() < NORMAL_BONUS_CHANCE){
+        if(Math.random()<0.5){ state.seeds++; showToast('+1 семя (бонус)'); }
+        else { state.water++; showToast('+1 вода (бонус)'); }
+      } else showToast('Собран урожай.');
+    }
+    // tree immediate gold
+    if(t.id==='tree' && (!p.mutations || p.mutations.length===0)){ state.gold += t.sell; showToast('Дерево дало '+t.sell+' золота при сборе'); }
+    // update stats for mutants
+    if(p.mutations && p.mutations.length) state.stats.mutants += p.mutations.length;
+    // reset plot
+    state.plots[i] = {stage:0,progress:0,mutations:[],type:null};
+    save(); render(); updateUI(); triggerSound('harvest');
+    return;
+  }
+  showToast('Растение растёт — полей или подожди.');
+}
+
+/* ===== control buttons ===== */
+btnPlant.addEventListener('click', ()=>{
+  const idx = state.plots.findIndex(p=>p.stage===0);
+  if(idx===-1){ showToast('Нет пустых грядок'); return; }
+  if(state.seeds<=0){ showToast('Нет семян'); return; }
+  const p = state.plots[idx];
+  state.seeds--; p.stage=1; p.progress=0; p.mutations=[]; p.type = pickPlantType();
+  save(); render(); updateUI(); triggerSound('plant'); showToast('Посажено: '+p.type.name);
+});
+
+btnWater.addEventListener('click', ()=>{
+  if(state.water<=0){ showToast('Воды нет'); triggerSound('error'); return; }
+  let watered=false;
+  state.plots.forEach(p=>{ if(p.stage>0 && p.stage<3){ p.progress += 25; watered=true; } });
+  if(watered){ state.water--; save(); render(); updateUI(); triggerSound('water'); showToast('Полив ускорил рост'); }
+  else showToast('Нечего поливать');
+});
+
+btnHarvest.addEventListener('click', ()=>{
+  // harvest all mature plots
+  let any=false;
+  for(let i=0;i<TOTAL;i++){
+    const p = state.plots[i];
+    if(p && p.stage===3){
+      onPlotClick(i, {clientX:0,clientY:0}, null);
+      any=true;
+    }
+  }
+  if(!any) showToast('Нет зрелых растений для сбора');
+});
+
+/* ===== shop actions ===== */
+document.getElementById('sell1').addEventListener('click', ()=>{ if(state.harvest<=0){ showToast('Нет урожая'); return; } state.harvest--; state.gold += PRICES.sellPerHarvest; save(); updateUI(); showToast('Продан 1 урожай'); triggerSound('sell'); });
+document.getElementById('sellAll').addEventListener('click', ()=>{ if(state.harvest<=0){ showToast('Нет урожая'); return; } const amt=state.harvest; state.harvest=0; state.gold += amt * PRICES.sellPerHarvest; save(); updateUI(); showToast('Продан весь урожай'); triggerSound('sell'); });
+document.getElementById('buySeed').addEventListener('click', ()=>{ if(state.gold < PRICES.buySeed){ showToast('Не хватает золота'); return; } state.gold -= PRICES.buySeed; state.seeds++; save(); updateUI(); showToast('Куплено 1 семя'); });
+document.getElementById('buyWater').addEventListener('click', ()=>{ if(state.gold < PRICES.buyWater){ showToast('Не хватает золота'); return; } state.gold -= PRICES.buyWater; state.water++; save(); updateUI(); showToast('Куплена 1 вода'); });
+
+/* ===== export/import/reset/mode ===== */
+document.getElementById('export').addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify({state,MODE,TOTAL},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='garden-v7.json'; a.click(); URL.revokeObjectURL(url); });
+document.getElementById('import').addEventListener('click', ()=>{ const input=document.createElement('input'); input.type='file'; input.accept='application/json'; input.onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ const obj=JSON.parse(ev.target.result); if(obj && obj.state && obj.state.plots && (obj.TOTAL===TOTAL_DESKTOP || obj.TOTAL===TOTAL_MOBILE || obj.TOTAL===TOTAL)){ state=obj.state; MODE=obj.MODE||MODE; save(); render(); updateUI(); showToast('Импорт успешен'); } else showToast('Неверный файл'); }catch(err){ showToast('Ошибка импорта'); } }; r.readAsText(f); }; input.click(); });
+document.getElementById('reset').addEventListener('click', ()=>{ if(confirm('Сбросить прогресс?')) startNewGame(); });
+document.getElementById('btnSwitchMode').addEventListener('click', ()=>{ chooseMode(true); });
+
+btnShopToggle.addEventListener('click', ()=>{ if(window.innerWidth <= 920){ sidebar.classList.toggle('open'); } else sidebar.classList.toggle('hidden'); });
+
+/* ===== growth tick ===== */
+setInterval(()=>{
+  // if frozen by ice, do nothing
+  if(now() < (state.effects.frozenUntil || 0)) return;
+  let changed=false;
+  let globalBoost=1;
+  if(now() < (state.effects.fireBoostUntil || 0)) globalBoost = 1.5;
+  for(let i=0;i<TOTAL;i++){
+    const p = state.plots[i];
+    if(p && p.stage>0 && p.stage<3){
+      const mult = (p.type && p.type.growMultiplier) ? p.type.growMultiplier : 1;
+      p.progress += (5 * globalBoost) / mult;
+      if(p.progress >= 100){
+        p.progress = 0;
+        p.stage++;
+        if(p.stage === 3){
+          // assign multiple mutations independently
+          p.mutations = [];
+          if(Math.random() < MUTATION_CHANCES.gold) p.mutations.push({id:'gold', name:'Золотой', icon:'✨', desc:'+3 семени, +5 воды, +2 золота'});
+          if(Math.random() < MUTATION_CHANCES.fire) p.mutations.push({id:'fire', name:'Огненный', icon:'🔥', desc:'Ускоряет рост всех растений на 50% (20s)'});
+          if(Math.random() < MUTATION_CHANCES.ice) p.mutations.push({id:'ice', name:'Ледяной', icon:'❄️', desc:'Замораживает рост на 10s, при сборе +10 золота'});
+          if(Math.random() < MUTATION_CHANCES.rainbow) p.mutations.push({id:'rainbow', name:'Радужный', icon:'🌈', desc:'Мгновенно даёт +1 уровень'});
+          if(p.mutations && p.mutations.length) state.stats.mutants += p.mutations.length;
+        }
+        changed=true;
+      }
+    }
+  }
+  if(changed){ save(); render(); updateUI(); }
+}, 2000);
+
+/* ===== XP and levels ===== */
+function addXP(amount){ state.xp += amount; let leveled=false; while(state.xp >= XP_PER_LEVEL){ state.xp -= XP_PER_LEVEL; state.level++; leveled=true; state.seeds += 2; state.water += 2; showToast('Уровень +1! Награда: +2 семени, +2 воды'); } if(leveled) triggerSound('plant'); save(); updateUI(); }
+function levelUp(){ state.level++; state.seeds+=2; state.water+=2; save(); updateUI(); showToast('Уровень +1'); }
+
+/* ===== achievements ===== */
+function renderAchievements(){ achievementsList.innerHTML=''; ACHIEVEMENTS_DEF.forEach(a=>{ const unlocked = !!state.achievements[a.id]; const el = document.createElement('div'); el.className='achievement'; el.innerHTML = '<strong>'+ (unlocked? '✅ ':'') + a.title + '</strong><div class="small">'+a.desc+'</div>'; achievementsList.appendChild(el); }); }
+function checkAchievements(){ ACHIEVEMENTS_DEF.forEach(a=>{ if(!state.achievements[a.id] && a.check(state)){ state.achievements[a.id]=true; save(); renderAchievements(); showToast('Достижение: '+a.title); if(a.reward) a.reward(); } }); }
+
+/* ===== UI update ===== */
+function updateUI(){ seedsEl.textContent = state.seeds; waterEl.textContent = state.water; harvestEl.textContent = state.harvest; goldEl.textContent = state.gold; xpEl.textContent = state.xp; levelEl.textContent = state.level; renderAchievements(); checkAchievements(); save(); }
+
+/* ===== start/new game & mode chooser ===== */
+function startNewGame(){ TOTAL = (MODE === 'mobile') ? TOTAL_MOBILE : TOTAL_DESKTOP; state = { seeds:5, water:5, harvest:0, gold:0, xp:0, level:1, plots:[], achievements:{}, stats:{harvested:0,mutants:0}, effects:{fireBoostUntil:0,frozenUntil:0} }; for(let i=0;i<TOTAL;i++) state.plots.push({stage:0,progress:0,mutations:[],type:null}); save(); render(); updateUI(); showToast('Новая игра запущена ('+MODE+')'); }
+
+function chooseMode(force=false){
+  const current = MODE || 'desktop';
+  if(!force && MODE) return; // already chosen
+  const choice = confirm('Выбрать мобильный режим? OK = Мобильный (4x3), Отмена = ПК (5x3)');
+  MODE = choice ? 'mobile' : 'desktop';
+  localStorage.setItem('garden_mode', MODE);
+  TOTAL = (MODE === 'mobile') ? TOTAL_MOBILE : TOTAL_DESKTOP;
+  startNewGame();
+}
+
+/* ===== load or fresh start ===== */
+if(!load()){
+  chooseMode(false); // ask on first run
+  startNewGame();
+} else {
+  // if loaded, ensure MODE and TOTAL consistent
+  MODE = MODE || localStorage.getItem('garden_mode') || 'desktop';
+  TOTAL = (MODE === 'mobile') ? TOTAL_MOBILE : TOTAL_DESKTOP;
+  // if plots length mismatch, re-init
+  if(!state.plots || state.plots.length !== TOTAL) startNewGame();
+  else { render(); updateUI(); showToast('Игра восстановлена'); }
+}
+
+/* ===== initial render ===== */
+render(); updateUI();
+
+</script>
 </body>
 </html>
