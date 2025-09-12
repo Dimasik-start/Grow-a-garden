@@ -91,11 +91,13 @@ header{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-
 </div>
 
 <div id="toast" class="toast"></div>
+
 <script>
 const GARDEN_SIZE=8;
 let garden=[], inventory=[], selectedBed=null;
 let money=parseInt(localStorage.getItem('money'))||20;
 let water=parseInt(localStorage.getItem('water'))||2;
+
 const plantsData = {'Морковь': {growRate:5, price:10, maxHarvest:1, cost:5}, 'Клубника': {growRate:2, price:5, maxHarvest:10, cost:10}};
 
 const gardenEl=document.getElementById('garden');
@@ -109,114 +111,126 @@ const seedOptions=document.getElementById('seedOptions');
 function showToast(msg){toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(()=>{toastEl.classList.remove('show');},2000);}
 function saveProgress(){localStorage.setItem('money',money);localStorage.setItem('water',water);localStorage.setItem('garden',JSON.stringify(garden.map(b=>b.plant)));localStorage.setItem('inventory',JSON.stringify(inventory));}
 
-function updateUI(){
-  waterEl.textContent=water;
-  garden.forEach((b,i)=>{
-    const el=document.getElementById('bed-'+i);
-    el.classList.toggle('selected',selectedBed===i);
-    const plantEl=el.querySelector('.plant');
-    const soilEl=el.querySelector('.soil');
-    if(!b.plant){if(plantEl) plantEl.remove();soilEl.textContent='Пусто';} 
-    else {
-      soilEl.textContent='';
-      if(!plantEl){
-        const div=document.createElement('div');
-        div.className='plant';
-        div.innerHTML=`<div class="leaves">🌿</div><div class="emoji">${b.plant.type==='Морковь'?'🥕':'🍓'}</div>
-        <div class="stage">${b.plant.progress||0}%</div>
-        <div class="progress"><i style="width:${b.plant.progress||0}%"></i></div>`;
-        el.appendChild(div);
-      } else {
-        plantEl.querySelector('.progress i').style.width=(b.plant.progress||0)+'%';
-        plantEl.querySelector('.stage').textContent=Math.floor(b.plant.progress||0)+'%';
-        const leaves=el.querySelector('.leaves');
-        if(leaves) leaves.style.transform=`translateY(${-(b.plant.progress/5)}px) rotate(${Math.sin(Date.now()/500)*10}deg)`;
-        const scale=0.5+0.5*(b.plant.progress/100);
-        el.querySelector('.plant .emoji').style.transform=`scale(${scale})`;
-      }
-    }
-  });
-  renderInventory();
-  saveProgress();
-}
-
-function renderInventory(){
-  const seedsCount={}, harvestCount={};
-  inventory.forEach(item=>{if(item.harvested) harvestCount[item.type]=harvestCount[item.type]?harvestCount[item.type]+1:1; else seedsCount[item.type]=seedsCount[item.type]?seedsCount[item.type]+1:1;});
-  inventorySeedsEl.innerHTML='';for(const key in seedsCount) inventorySeedsEl.innerHTML+=`${key} x ${seedsCount[key]}<br>`;
-  inventoryHarvestEl.innerHTML='';for(const key in harvestCount) inventoryHarvestEl.innerHTML+=`${key} x ${harvestCount[key]}<br>`;
+function resetGame(){
+    money=20; water=2; inventory=[]; garden=[]; selectedBed=null;
+    localStorage.clear(); createBeds(); updateUI();
+    showToast('Игра сброшена!');
 }
 
 function createBeds(){
-  garden=[]; const savedGarden=JSON.parse(localStorage.getItem('garden')||'[]'); const savedInventory=JSON.parse(localStorage.getItem('inventory')||'[]'); inventory=[]; savedInventory.forEach(i=>inventory.push(i));
-  for(let i=0;i<GARDEN_SIZE;i++){
-    const bed={plant:savedGarden[i]||null};
-    garden.push(bed);
-    const div=document.createElement('div');
-    div.className='bed'; div.id='bed-'+i; div.innerHTML='<div class="soil">Пусто</div>';
-    div.addEventListener('click',()=>{selectedBed=i;updateUI();});
-    gardenEl.appendChild(div);
-  }
+    gardenEl.innerHTML='';
+    const savedGarden=JSON.parse(localStorage.getItem('garden')||'[]');
+    const savedInventory=JSON.parse(localStorage.getItem('inventory')||'[]');
+    inventory=[]; savedInventory.forEach(i=>inventory.push(i));
+    for(let i=0;i<GARDEN_SIZE;i++){
+        const bed={plant:savedGarden[i]||null};
+        garden.push(bed);
+        const div=document.createElement('div');
+        div.className='bed'; div.id='bed-'+i; div.innerHTML='<div class="soil">Пусто</div>';
+        div.addEventListener('click',()=>{selectedBed=i;updateUI();});
+        gardenEl.appendChild(div);
+    }
+}
+
+function updateUI(){
+    waterEl.textContent=water;
+    garden.forEach((b,i)=>{
+        const el=document.getElementById('bed-'+i);
+        el.classList.toggle('selected',selectedBed===i);
+        const plantEl=el.querySelector('.plant');
+        const soilEl=el.querySelector('.soil');
+        if(!b.plant){if(plantEl) plantEl.remove();soilEl.textContent='Пусто';} 
+        else {
+            soilEl.textContent='';
+            if(!plantEl){
+                const div=document.createElement('div');
+                div.className='plant';
+                div.innerHTML=`<div class="leaves">🌿</div><div class="emoji">${b.plant.type==='Морковь'?'🥕':'🍓'}</div>
+                <div class="stage">${b.plant.progress||0}%</div>
+                <div class="progress"><i style="width:${b.plant.progress||0}%"></i></div>`;
+                el.appendChild(div);
+            } else {
+                plantEl.querySelector('.progress i').style.width=(b.plant.progress||0)+'%';
+                plantEl.querySelector('.stage').textContent=Math.floor(b.plant.progress||0)+'%';
+                const leaves=el.querySelector('.leaves');
+                if(leaves) leaves.style.transform=`translateY(${-(b.plant.progress/5)}px) rotate(${Math.sin(Date.now()/500)*10}deg)`;
+                const scale=0.5+0.5*(b.plant.progress/100);
+                el.querySelector('.plant .emoji').style.transform=`scale(${scale})`;
+            }
+        }
+    });
+    renderInventory();
+    saveProgress();
+}
+
+function renderInventory(){
+    const seedsCount={}, harvestCount={};
+    inventory.forEach(item=>{
+        if(item.harvested) harvestCount[item.type]=harvestCount[item.type]?harvestCount[item.type]+1:1;
+        else seedsCount[item.type]=seedsCount[item.type]?seedsCount[item.type]+1:1;
+    });
+    inventorySeedsEl.innerHTML=''; for(const key in seedsCount) inventorySeedsEl.innerHTML+=`${key} x ${seedsCount[key]}<br>`;
+    inventoryHarvestEl.innerHTML=''; for(const key in harvestCount) inventoryHarvestEl.innerHTML+=`${key} x ${harvestCount[key]}<br>`;
 }
 
 function plantSeed(){
-  if(selectedBed===null){showToast('Выберите грядку');return;}
-  const b=garden[selectedBed]; if(b.plant){showToast('Грядка занята');return;}
-  const seedTypes = inventory.filter(i=>!i.harvested).map(i=>i.type);
-  const uniqueTypes=[...new Set(seedTypes)];
-  if(uniqueTypes.length===0){showToast('Нет семян');return;}
-  if(uniqueTypes.length===1) plantChosen(uniqueTypes[0]);
-  else {
-    seedOptions.innerHTML=''; uniqueTypes.forEach(type=>{
-      const btn=document.createElement('div'); btn.className='seed-option'; btn.textContent=type;
-      btn.addEventListener('click',()=>plantChosen(type));
-      seedOptions.appendChild(btn);
-    });
-    seedModal.classList.add('open');
-  }
+    if(selectedBed===null){showToast('Выберите грядку');return;}
+    const b=garden[selectedBed]; if(b.plant){showToast('Грядка занята');return;}
+    const seedTypes = inventory.filter(i=>!i.harvested).map(i=>i.type);
+    const uniqueTypes=[...new Set(seedTypes)];
+    if(uniqueTypes.length===0){showToast('Нет семян');return;}
+    if(uniqueTypes.length===1) plantChosen(uniqueTypes[0]);
+    else {
+        seedOptions.innerHTML=''; uniqueTypes.forEach(type=>{
+            const btn=document.createElement('div'); btn.className='seed-option'; btn.textContent=type;
+            btn.addEventListener('click',()=>plantChosen(type));
+            seedOptions.appendChild(btn);
+        });
+        seedModal.classList.add('open');
+    }
 }
 
 function plantChosen(type){
-  const idx=inventory.findIndex(i=>i.type===type && !i.harvested);
-  if(idx!==-1){
-    inventory.splice(idx,1);
-    const data=plantsData[type];
-    garden[selectedBed].plant={type:type,maxHarvest:data.maxHarvest,progress:0,harvestedCount:0};
-    updateUI();
-    seedModal.classList.remove('open');
-  }
+    const idx=inventory.findIndex(i=>i.type===type && !i.harvested);
+    if(idx!==-1){
+        inventory.splice(idx,1);
+        const data=plantsData[type];
+        garden[selectedBed].plant={type:type,maxHarvest:data.maxHarvest,progress:0,harvestedCount:0};
+        updateUI();
+        seedModal.classList.remove('open');
+    }
 }
 
 function waterBed(){
-  if(selectedBed===null){showToast('Выберите грядку');return;}
-  const b=garden[selectedBed];
-  if(!b.plant){showToast('Нет растения');return;}
-  if(water<=0){showToast('Воды нет');return;}
-  water--; b.plant.progress=Math.min(100,(b.plant.progress||0)+20);
-  createWaterDrops(document.getElementById('bed-'+selectedBed)); updateUI();
+    if(selectedBed===null){showToast('Выберите грядку');return;}
+    const b=garden[selectedBed];
+    if(!b.plant){showToast('Нет растения');return;}
+    if(water<=0){showToast('Воды нет');return;}
+    water--; b.plant.progress=Math.min(100,(b.plant.progress||0)+20);
+    createWaterDrops(document.getElementById('bed-'+selectedBed)); updateUI();
 }
 
 function createWaterDrops(bedEl){
-  if(!bedEl) return;
-  for(let i=0;i<5;i++){
-    const drop=document.createElement('div'); drop.className='water-drop';
-    drop.style.left=(10+Math.random()*60)+'px';
-    drop.style.animationDelay=(i*0.1)+'s';
-    bedEl.appendChild(drop); setTimeout(()=>{drop.remove();},600);
-  }
+    if(!bedEl) return;
+    for(let i=0;i<5;i++){
+        const drop=document.createElement('div'); drop.className='water-drop';
+        drop.style.left=(10+Math.random()*60)+'px';
+        drop.style.animationDelay=(i*0.1)+'s';
+        bedEl.appendChild(drop); setTimeout(()=>{drop.remove();},600);
+    }
 }
 
 function harvestSelected(){
-  if(selectedBed===null){showToast('Выберите грядку');return;}
-  const b=garden[selectedBed]; if(!b.plant){showToast('Грядка пуста');return;}
-  if(b.plant.harvestedCount===undefined) b.plant.harvestedCount=0;
-  if(b.plant.harvestedCount < b.plant.maxHarvest){
-    inventory.push({type:b.plant.type, harvested:true});
-    b.plant.harvestedCount++;
-    if(b.plant.type === 'Клубника' && b.plant.harvestedCount < b.plant.maxHarvest){b.plant.progress=0;}
-    else if(b.plant.harvestedCount >= b.plant.maxHarvest){b.plant=null;}
-    updateUI();
-  }
+    if(selectedBed===null){showToast('Выберите грядку');return;}
+    const b=garden[selectedBed]; if(!b.plant){showToast('Грядка пуста');return;}
+    if(b.plant.harvestedCount===undefined) b.plant.harvestedCount=0;
+    if(b.plant.harvestedCount < b.plant.maxHarvest){
+        inventory.push({type:b.plant.type, harvested:true});
+        b.plant.harvestedCount++;
+        if(b.plant.type === 'Клубника' && b.plant.harvestedCount < b.plant.maxHarvest){b.plant.progress=0;}
+        else if(b.plant.harvestedCount >= b.plant.maxHarvest){b.plant=null;}
+        updateUI();
+    }
 }
 
 // Авто-рост
@@ -224,19 +238,17 @@ setInterval(()=>{garden.forEach(b=>{if(b.plant && b.plant.progress<100){b.plant.
 const el=document.getElementById('bed-'+garden.indexOf(b));
 if(el){const leaves=el.querySelector('.leaves'); if(leaves) leaves.style.transform=`translateY(${-(b.plant.progress/5)}px) rotate(${Math.sin(Date.now()/500)*10}deg)`; const scale=0.5+0.5*(b.plant.progress/100); el.querySelector('.plant .emoji').style.transform=`scale(${scale})`;}}}); updateUI();},1000);
 
-// Магазин и продажи
+// Магазин
 const shop=document.getElementById('shop'); const shopContent=document.getElementById('shopContent'); const tabShop=document.getElementById('tabShop'); const tabSell=document.getElementById('tabSell');
 
-function renderShop(){shopContent.innerHTML=''; for(const key in plantsData){const btn=document.createElement('button'); btn.className='btn'; btn.textContent=`Купить 1 ${key} (${plantsData[key].cost}💰)`; btn.addEventListener('click',()=>{if(money<plantsData[key].cost){showToast('Нет денег');return;} money-=plantsData[key].cost; inventory.push({type:key}); updateUI();}); const div=document.createElement('div'); div.className='shop-row'; div.textContent=key; div.appendChild(btn); shopContent.appendChild(div);}
-const waterBtn=document.createElement('button'); waterBtn.className='btn'; waterBtn.textContent='Купить воду (2💰)'; waterBtn.addEventListener('click',()=>{if(money<2){showToast('Нет денег');return;} money-=2; water+=1; updateUI();}); const waterDiv=document.createElement('div'); waterDiv.className='shop-row'; waterDiv.textContent='Вода 💧'; waterDiv.appendChild(waterBtn); shopContent.appendChild(waterDiv);}
+function renderShop(){shopContent.innerHTML=''; for(const key in plantsData){const div=document.createElement('div'); div.className='shop-row'; div.textContent=key; const btn=document.createElement('button'); btn.className='btn'; btn.textContent=`Купить 1 (${plantsData[key].cost}💰)`; btn.addEventListener('click',()=>{if(money<plantsData[key].cost){showToast('Нет денег');return;} money-=plantsData[key].cost; inventory.push({type:key}); updateUI();}); div.appendChild(btn); shopContent.appendChild(div);}
+const waterDiv=document.createElement('div'); waterDiv.className='shop-row'; waterDiv.textContent='Вода 💧'; const waterBtn=document.createElement('button'); waterBtn.className='btn'; waterBtn.textContent='Купить 1 (2💰)'; waterBtn.addEventListener('click',()=>{if(money<2){showToast('Нет денег');return;} money-=2; water+=1; updateUI();}); waterDiv.appendChild(waterBtn); shopContent.appendChild(waterDiv);}
 
-function renderSell(){shopContent.innerHTML=''; const types=[...new Set(inventory.filter(i=>i.harvested).map(i=>i.type))]; types.forEach(type=>{const div=document.createElement('div'); div.className='shop-row'; div.textContent=type; const sellOne=document.createElement('button'); sellOne.className='btn'; sellOne.textContent='Продать 1'; sellOne.addEventListener('click',()=>{const idx=inventory.findIndex(i=>i.type===type && i.harvested); if(idx!==-1){inventory.splice(idx,1); money+=plantsData[type].price;updateUI();}else showToast('Нет в инвентаре');}); const sellAll=document.createElement('button'); sellAll.className='btn'; sellAll.textContent='Продать всё'; sellAll.addEventListener('click',()=>{const all=inventory.filter(i=>i.type===type && i.harvested); inventory=inventory.filter(i=>!(i.type===type && i.harvested)); money+=plantsData[type].price*all.length; updateUI();}); div.appendChild(sellOne); div.appendChild(sellAll); shopContent.appendChild(div);});}
+function renderSell(){shopContent.innerHTML=''; const types=[...new Set(inventory.filter(i=>i.harvested).map(i=>i.type))]; types.forEach(type=>{const div=document.createElement('div'); div.className='shop-row'; div.textContent=type; const sellOne=document.createElement('button'); sellOne.className='btn'; sellOne.textContent='Продать 1'; sellOne.addEventListener('click',()=>{const idx=inventory.findIndex(i=>i.type===type && i.harvested); if(idx!==-1){inventory.splice(idx,1); money+=plantsData[type].price; updateUI();}else showToast('Нет в инвентаре');}); const sellAll=document.createElement('button'); sellAll.className='btn'; sellAll.textContent='Продать всё'; sellAll.addEventListener('click',()=>{const all=inventory.filter(i=>i.type===type && i.harvested); inventory=inventory.filter(i=>!(i.type===type && i.harvested)); money+=plantsData[type].price*all.length; updateUI();}); div.appendChild(sellOne); div.appendChild(sellAll); shopContent.appendChild(div);});}
 
 renderShop(); tabShop.addEventListener('click',renderShop); tabSell.addEventListener('click',renderSell);
 document.getElementById('openShop').addEventListener('click',()=>{shop.classList.add('open');});
 document.getElementById('closeShop').addEventListener('click',()=>{shop.classList.remove('open');});
-
-// Кнопки
 document.getElementById('plantBtn').addEventListener('click',plantSeed);
 document.getElementById('waterBtn').addEventListener('click',waterBed);
 document.getElementById('harvestBtn').addEventListener('click',harvestSelected);
@@ -245,7 +257,7 @@ document.getElementById('openInventory').addEventListener('click',()=>{document.
 document.getElementById('closeInventory').addEventListener('click',()=>{document.getElementById('inventory').classList.remove('open');});
 document.getElementById('openSettings').addEventListener('click',()=>{document.getElementById('settings').classList.add('open');});
 document.getElementById('closeSettings').addEventListener('click',()=>{document.getElementById('settings').classList.remove('open');});
-document.getElementById('resetBtn').addEventListener('click',()=>{if(confirm('Вы точно хотите сбросить прогресс?')){localStorage.clear();location.reload();}});
+document.getElementById('resetBtn').addEventListener('click',resetGame);
 
 createBeds();
 updateUI();
