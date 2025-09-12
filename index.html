@@ -1,208 +1,249 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>🌱 Ферма</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #e0ffe0;
-    }
-    .garden {
-      display: grid;
-      grid-template-columns: repeat(5, 80px);
-      grid-gap: 10px;
-      justify-content: center;
-      margin: 20px 0;
-    }
-    .plot {
-      width: 80px;
-      height: 80px;
-      border: 2px solid #555;
-      background: #9b7653;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border-radius: 10px;
-    }
-    .seed { background: green; border-radius: 50%; width: 40px; height: 40px; }
-    .plant { background: limegreen; border-radius: 50%; width: 60px; height: 60px; }
-    .harvest { background: gold; border-radius: 50%; width: 70px; height: 70px; }
-
-    button {
-      margin: 5px;
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 8px;
-    }
-
-    /* Всплывающие окна */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 10;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 300px;
-      text-align: left;
-    }
-    .close {
-      float: right;
-      font-size: 20px;
-      cursor: pointer;
-    }
-    .achievement {
-      margin: 5px 0;
-    }
-    .done {
-      color: green;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вырасти сад</title>
+<style>
+:root{--bg:#eef6ef;--card:#fff;--accent:#4caf50;--muted:#6b7280;--warn:#f87171}
+body{margin:0;font-family:sans-serif;background:var(--bg);display:flex;justify-content:center;padding:20px}
+.wrap{max-width:900px;width:100%}
+header{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.stats{display:flex;gap:12px;align-items:center}
+.stat{background:var(--card);padding:8px 12px;border-radius:12px;font-weight:600;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
+.garden{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.bed{background:linear-gradient(180deg,#f0fff0,#d6ffe0);padding:12px;border-radius:16px;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;border:1px solid rgba(34,197,94,0.2);transition:0.3s;box-shadow:0 4px 8px rgba(0,0,0,0.08);}
+.bed.selected{outline:3px solid rgba(74,222,128,0.4);box-shadow:0 10px 30px rgba(74,222,128,0.15)}
+.bed .soil{width:100%;height:48px;background:linear-gradient(180deg,#8b5a2b,#6b3f1f);border-radius:12px;margin-top:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;transition:0.3s}
+.bed .plant{position:absolute;top:14px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:0.3s}
+.bed .plant .emoji{font-size:32px;transition:transform 0.5s;}
+.bed .plant .stage{font-size:12px;color:#111;font-weight:600}
+.bed .plant .progress{width:80px;height:6px;background:#e6f4ea;border-radius:999px;overflow:hidden;display:block;margin-top:4px}
+.bed .plant .progress i{display:block;height:100%;background:linear-gradient(90deg,#34d399,#10b981);width:0%;transition:width 0.5s;}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{padding:10px 16px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.1);font-weight:600;transition:0.2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.15)}
+.btn.primary{background:linear-gradient(90deg,var(--accent),#60a5fa);color:#fff}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;padding:18px;border-radius:12px;display:none;box-shadow:0 10px 30px rgba(0,0,0,0.3);width:360px;z-index:10}
+.modal.open{display:block}
+.shop-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #ccc}
+.shop-row:last-child{border-bottom:none}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--warn);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:0.5s;z-index:20}.toast.show{opacity:1;pointer-events:auto}
+</style>
 </head>
 <body>
-  <h1>🌱 Моя ферма</h1>
-  <p>Баланс: <span id="money">100</span> 💰</p>
-  <div class="garden" id="garden"></div>
+<div class="wrap">
+<header>
+<div class="stats">
+<div class="stat">💰 <span id="money">0</span></div>
+<div class="stat">🌾 <span id="seeds">0</span></div>
+<div class="stat">💧 <span id="water">0</span></div>
+</div>
+<div>
+<button id="openShop" class="btn">🛒 Магазин</button>
+<button id="openInventory" class="btn">🎒 Инвентарь</button>
+<button id="openSettings" class="btn">⚙️ Настройки</button>
+</div>
+</header>
 
-  <button onclick="openShop()">🛒 Магазин</button>
-  <button onclick="openStats()">📊 Статистика</button>
-  <button onclick="confirmReset()">♻ Сброс</button>
+<div class="garden" id="garden"></div>
 
-  <!-- Окно магазина -->
-  <div id="shopModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeShop()">&times;</span>
-      <h2>🛒 Магазин</h2>
-      <button onclick="buySeed()">Купить семя (10💰)</button>
-    </div>
-  </div>
+<div class="controls">
+<button id="plantBtn" class="btn primary">Посадить</button>
+<button id="waterBtn" class="btn primary">Полить</button>
+<button id="harvestBtn" class="btn primary">Собрать урожай</button>
+</div>
 
-  <!-- Окно статистики -->
-  <div id="statsModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeStats()">&times;</span>
-      <h2>📊 Статистика</h2>
-      <p>💰 Деньги: <span id="statMoney">0</span></p>
-      <p>🌱 Посажено семян: <span id="statPlanted">0</span></p>
-      <p>🌾 Собрано урожая: <span id="statHarvested">0</span></p>
-      <p>🕒 Время в игре: <span id="statTime">0</span> мин</p>
-      <h3>🏆 Достижения</h3>
-      <div id="achievements"></div>
-    </div>
-  </div>
+<div id="shop" class="modal">
+<h3>Магазин</h3>
+<div style="display:flex;gap:10px;margin-bottom:10px;">
+<button id="tabShop" class="btn primary">Shop</button>
+<button id="tabSell" class="btn primary">Sell</button>
+</div>
+<div id="shopContent"></div>
+<button id="closeShop" class="btn" style="margin-top:8px;">Закрыть</button>
+</div>
 
-  <script>
-    let money = 100;
-    let seeds = 0;
-    let planted = 0;
-    let harvested = 0;
-    let playMinutes = 0;
+<div id="inventory" class="modal">
+<h3>Инвентарь</h3>
+<div id="inventoryList">Пусто</div>
+<button id="closeInventory" class="btn" style="margin-top:8px;">Закрыть</button>
+</div>
 
-    const garden = document.getElementById("garden");
-    for (let i = 0; i < 10; i++) {
-      let plot = document.createElement("div");
-      plot.classList.add("plot");
-      plot.dataset.stage = "empty";
-      plot.onclick = () => interact(plot);
-      garden.appendChild(plot);
-    }
+<div id="settings" class="modal">
+<h3>Настройки</h3>
+<button id="resetBtn" class="btn">Сбросить прогресс</button>
+<button id="closeSettings" class="btn" style="margin-top:8px;">Закрыть</button>
+</div>
 
-    function interact(plot) {
-      if (plot.dataset.stage === "empty" && seeds > 0) {
-        plot.dataset.stage = "seed";
-        plot.innerHTML = "<div class='seed'></div>";
-        seeds--;
-        planted++;
-      } else if (plot.dataset.stage === "seed") {
-        plot.dataset.stage = "plant";
-        plot.innerHTML = "<div class='plant'></div>";
-      } else if (plot.dataset.stage === "plant") {
-        plot.dataset.stage = "harvest";
-        plot.innerHTML = "<div class='harvest'></div>";
-      } else if (plot.dataset.stage === "harvest") {
-        plot.dataset.stage = "empty";
-        plot.innerHTML = "";
-        money += 20;
-        harvested++;
-      }
-      updateUI();
-    }
+<div id="toast" class="toast"></div>
+</div>
 
-    function buySeed() {
-      if (money >= 10) {
-        money -= 10;
-        seeds++;
-        updateUI();
+<script>
+const GARDEN_SIZE=8;
+const garden=[];
+const inventory=[];
+let selectedBed=null;
+let money=parseInt(localStorage.getItem('money'))||20;
+let seeds=parseInt(localStorage.getItem('seeds'))||1;
+let water=parseInt(localStorage.getItem('water'))||2;
+
+const gardenEl=document.getElementById('garden');
+const moneyEl=document.getElementById('money');
+const seedsEl=document.getElementById('seeds');
+const waterEl=document.getElementById('water');
+const toastEl=document.getElementById('toast');
+const inventoryListEl=document.getElementById('inventoryList');
+
+function showToast(msg){
+  toastEl.textContent=msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>{toastEl.classList.remove('show');},2000);
+}
+
+function saveProgress(){
+  localStorage.setItem('money',money);
+  localStorage.setItem('seeds',seeds);
+  localStorage.setItem('water',water);
+  localStorage.setItem('garden',JSON.stringify(garden.map(b=>b.plant)));
+  localStorage.setItem('inventory',JSON.stringify(inventory));
+}
+
+function updateUI(){
+  moneyEl.textContent=money;
+  seedsEl.textContent=seeds;
+  waterEl.textContent=water;
+  garden.forEach((b,i)=>{
+    const el=document.getElementById('bed-'+i);
+    el.classList.toggle('selected',selectedBed===i);
+    const plantEl=el.querySelector('.plant');
+    const soilEl=el.querySelector('.soil');
+    if(!b.plant){
+      if(plantEl) plantEl.remove();
+      soilEl.textContent='Пусто';
+    } else {
+      soilEl.textContent=''; 
+      if(!plantEl){
+        const div=document.createElement('div');
+        div.className='plant';
+        div.innerHTML=`<div class="emoji">🥕</div>
+        <div class="stage">${b.plant.progress||0}%</div>
+        <div class="progress"><i style="width:${b.plant.progress||0}%"></i></div>`;
+        el.appendChild(div);
       } else {
-        alert("Недостаточно денег!");
+        plantEl.querySelector('.progress i').style.width=(b.plant.progress||0)+'%';
+        plantEl.querySelector('.stage').textContent=Math.floor(b.plant.progress||0)+'%';
       }
+      // Анимация роста моркови
+      const scale=0.5+0.5*(b.plant.progress/100);
+      el.querySelector('.plant .emoji').style.transform=`scale(${scale})`;
     }
+  });
+  inventoryListEl.textContent=inventory.length>0?inventory.map(i=>i.type).join(', '):'Пусто';
+  saveProgress();
+}
 
-    function updateUI() {
-      document.getElementById("money").innerText = money;
+function createBeds(){
+  const savedGarden=JSON.parse(localStorage.getItem('garden')||'[]');
+  const savedInventory=JSON.parse(localStorage.getItem('inventory')||'[]');
+  savedInventory.forEach(i=>inventory.push(i));
+  for(let i=0;i<GARDEN_SIZE;i++){
+    const bed={plant:savedGarden[i]||null, progress:(savedGarden[i]?.progress||0)};
+    garden.push(bed);
+    const div=document.createElement('div');
+    div.className='bed';
+    div.id='bed-'+i;
+    div.innerHTML='<div class="soil">Пусто</div>';
+    div.addEventListener('click',()=>{selectedBed=i;updateUI();});
+    gardenEl.appendChild(div);
+  }
+}
+
+function plantSeed(){
+  if(selectedBed===null){showToast('Выберите грядку');return;}
+  const b=garden[selectedBed];
+  if(b.plant){showToast('Грядка занята');return;}
+  if(seeds<=0){showToast('Семян нет');return;}
+  seeds--;
+  b.plant={type:'Морковь', progress:0};
+  updateUI();
+}
+
+function waterBed(){
+  if(selectedBed===null){showToast('Выберите грядку');return;}
+  const b=garden[selectedBed];
+  if(!b.plant){showToast('Нет растения');return;}
+  if(water<=0){showToast('Воды нет');return;}
+  b.plant.progress=Math.min(100,(b.plant.progress||0)+50); 
+  updateUI();
+}
+
+function harvestSelected(){
+  if(selectedBed===null){showToast('Выберите грядку');return;}
+  const b=garden[selectedBed];
+  if(!b.plant){showToast('Грядка пуста');return;}
+  inventory.push({type:b.plant.type});
+  b.plant=null;
+  updateUI();
+}
+
+// Авто-рост моркови
+setInterval(()=>{
+  garden.forEach(b=>{
+    if(b.plant && b.plant.progress<100){
+      b.plant.progress=Math.min(100,(b.plant.progress||0)+5);
     }
+  });
+  updateUI();
+},3000);
 
-    function openShop() { document.getElementById("shopModal").style.display = "flex"; }
-    function closeShop() { document.getElementById("shopModal").style.display = "none"; }
-    function openStats() { 
-      updateStats();
-      document.getElementById("statsModal").style.display = "flex"; 
-    }
-    function closeStats() { document.getElementById("statsModal").style.display = "none"; }
+createBeds();
+updateUI();
 
-    function confirmReset() {
-      if (confirm("Точно сбросить прогресс?")) {
-        money = 100;
-        seeds = 0;
-        planted = 0;
-        harvested = 0;
-        playMinutes = 0;
-        garden.querySelectorAll(".plot").forEach(p => { p.dataset.stage = "empty"; p.innerHTML = ""; });
-        updateUI();
-      }
-    }
+// Buttons
+document.getElementById('plantBtn').addEventListener('click',plantSeed);
+document.getElementById('waterBtn').addEventListener('click',waterBed);
+document.getElementById('harvestBtn').addEventListener('click',harvestSelected);
 
-    // статистика
-    function updateStats() {
-      document.getElementById("statMoney").innerText = money;
-      document.getElementById("statPlanted").innerText = planted;
-      document.getElementById("statHarvested").innerText = harvested;
-      document.getElementById("statTime").innerText = playMinutes;
+// Shop with tabs
+const shop=document.getElementById('shop');
+const shopContent=document.getElementById('shopContent');
+const tabShop=document.getElementById('tabShop');
+const tabSell=document.getElementById('tabSell');
 
-      // достижения
-      const achievements = [
-        { text: "Посадил 10 семян", done: planted >= 10 },
-        { text: "Собрал 20 урожая", done: harvested >= 20 },
-        { text: "Накопил 1000$", done: money >= 1000 },
-        { text: "Провёл 30 мин в игре", done: playMinutes >= 30 }
-      ];
+function renderShop(){
+  shopContent.innerHTML=`<div class="shop-row">Семя 🥕 <button id="buySeed" class="btn">Купить 5</button></div>
+  <div class="shop-row">Вода 💧 <button id="buyWater" class="btn">Купить 2</button></div>`;
+  document.getElementById('buySeed').addEventListener('click',()=>{if(money<5){showToast('Нет денег');return;}money-=5;seeds++;updateUI();});
+  document.getElementById('buyWater').addEventListener('click',()=>{if(money<2){showToast('Нет денег');return;}money-=2;water++;updateUI();});
+}
 
-      let list = "";
-      achievements.forEach(a => {
-        list += `<div class="achievement ${a.done ? 'done' : ''}"> ${a.done ? "✅" : "❌"} ${a.text}</div>`;
-      });
-      document.getElementById("achievements").innerHTML = list;
-    }
+function renderSell(){
+  shopContent.innerHTML=`<div class="shop-row">Продать одну <button id="sellOneShop" class="btn">Продать 1</button></div>
+  <div class="shop-row">Продать всё <button id="sellAllShop" class="btn">Продать всё</button></div>`;
+  document.getElementById('sellOneShop').addEventListener('click',()=>{if(inventory.length>0){money+=10;inventory.pop();updateUI();}else{showToast('Инвентарь пуст');}});
+  document.getElementById('sellAllShop').addEventListener('click',()=>{if(inventory.length>0){money+=10*inventory.length;inventory.length=0;updateUI();}else{showToast('Инвентарь пуст');}});
+}
 
-    // таймер времени
-    setInterval(() => {
-      playMinutes++;
-    }, 60000);
+// По умолчанию вкладка Shop
+renderShop();
 
-    updateUI();
-  </script>
+tabShop.addEventListener('click',renderShop);
+tabSell.addEventListener('click',renderSell);
+
+document.getElementById('openShop').addEventListener('click',()=>{shop.classList.add('open');});
+document.getElementById('closeShop').addEventListener('click',()=>{shop.classList.remove('open');});
+
+// Inventory
+const inventoryModal=document.getElementById('inventory');
+document.getElementById('openInventory').addEventListener('click',()=>{inventoryModal.classList.add('open');});
+document.getElementById('closeInventory').addEventListener('click',()=>{inventoryModal.classList.remove('open');});
+
+// Settings
+const settings=document.getElementById('settings');
+document.getElementById('openSettings').addEventListener('click',()=>{settings.classList.add('open');});
+document.getElementById('closeSettings').addEventListener('click',()=>{settings.classList.remove('open');});
+document.getElementById('resetBtn').addEventListener('click',()=>{if(confirm('Вы точно хотите сбросить прогресс?')){localStorage.clear();location.reload();}});
+</script>
 </body>
 </html>
-        
