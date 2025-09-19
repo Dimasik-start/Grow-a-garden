@@ -1,241 +1,344 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ферма с весом</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #e5f9e0;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  header {
-    background: #4CAF50;
-    color: white;
-    padding: 15px;
-    width: 100%;
-    text-align: center;
-  }
-  #money {
-    font-weight: bold;
-  }
-  #garden {
-    display: grid;
-    grid-template-columns: repeat(5, 100px);
-    grid-auto-rows: 100px; /* фиксированная высота */
-    gap: 10px;
-    margin: 20px;
-  }
-  .bed {
-    width: 100px;
-    height: 100px;
-    background: #d2b48c;
-    border: 2px solid #8b5a2b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-  .plant {
-    width: 80px;
-    height: 80px;
-    transition: transform 0.3s;
-  }
-  .inventory-modal {
-    display: none;
-    position: fixed;
-    top: 10%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    border: 2px solid #333;
-    padding: 20px;
-    max-height: 70%;
-    overflow-y: auto;
-    z-index: 10;
-  }
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  #shop {
-    margin: 20px;
-    padding: 10px;
-    background: #fff;
-    border: 2px solid #333;
-  }
-  button {
-    margin: 5px;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Игра: Вырасти сад</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #e0ffe0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      background: #4caf50;
+      color: white;
+      padding: 10px;
+      width: 100%;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    #stats {
+      margin: 10px;
+      font-size: 16px;
+    }
+    #garden {
+      display: grid;
+      grid-template-columns: repeat(4, 120px);
+      grid-gap: 10px;
+      margin: 20px;
+    }
+    .bed {
+      width: 120px;
+      height: 120px;
+      border: 2px solid #555;
+      border-radius: 8px;
+      background: #a0522d;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      cursor: pointer;
+    }
+    .plant {
+      position: absolute;
+      bottom: 5px;
+      transition: transform 1s linear;
+    }
+    .growth-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 6px;
+      background: limegreen;
+      width: 0%;
+      transition: width 0.5s;
+    }
+    #controls {
+      margin: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .water-btn { background: #2196f3; color: white; }
+    .plant-btn { background: #4caf50; color: white; }
+    .harvest-btn { background: #ff9800; color: white; }
+    .shop-btn { background: #9c27b0; color: white; }
+    .inv-btn { background: #607d8b; color: white; }
+    .settings-btn { background: #f44336; color: white; }
+    #toast {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      display: none;
+      z-index: 1000;
+    }
+    /* Модальные окна */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      max-height: 80%;
+      overflow-y: auto;
+    }
+    .modal h2 {
+      margin-top: 0;
+    }
+    .close {
+      float: right;
+      cursor: pointer;
+      color: red;
+    }
+  </style>
 </head>
 <body>
-<header>
-  <h1>🌱 Ферма с весом</h1>
-  <p>Монеты: <span id="money">100</span></p>
-  <button onclick="openInventory()">🎒 Инвентарь</button>
-</header>
-
-<div id="garden"></div>
-
-<div id="shop">
-  <h2>Магазин</h2>
-  <div id="shop-items"></div>
-</div>
-
-<!-- Модальное окно инвентаря -->
-<div id="inventoryModal" class="inventory-modal">
-  <div class="modal-header">
-    <h2>🎒 Инвентарь</h2>
-    <button onclick="closeInventory()">Закрыть</button>
+  <header>🌱 Игра: Вырасти сад</header>
+  <div id="stats">
+    💰 Деньги: <span id="money">0</span> |
+    💧 Вода: <span id="water">0</span>
   </div>
-  <ul id="inventoryList"></ul>
-</div>
 
-<script>
-  let money = 100;
-  let garden = Array(15).fill(null);
-  let inventory = [];
-  let selectedSeed = null;
+  <div id="garden"></div>
 
-  // Базовые растения
-  const plants = {
-    carrot: { name: "Морковь", price: 10, growTime: 5000, basePricePerKg: 5, img: "🥕" },
-    strawberry: { name: "Клубника", price: 20, growTime: 8000, basePricePerKg: 10, img: "🍓" },
-    grape: { name: "Виноград", price: 30, growTime: 12000, basePricePerKg: 15, img: "🍇" },
-    pumpkin: { name: "Тыква-великан", price: 50, growTime: 36000, basePricePerKg: 20, img: "🎃" }
-  };
+  <div id="controls">
+    <button class="water-btn" onclick="waterPlant()">Полить</button>
+    <button class="plant-btn" onclick="openPlantMenu()">Посадить</button>
+    <button class="harvest-btn" onclick="harvestPlant()">Собрать</button>
+    <button class="shop-btn" onclick="openShop()">Магазин</button>
+    <button class="inv-btn" onclick="openInventory()">Инвентарь</button>
+    <button class="settings-btn" onclick="openSettings()">⚙️</button>
+  </div>
 
-  const gardenEl = document.getElementById("garden");
-  const moneyEl = document.getElementById("money");
-  const shopItemsEl = document.getElementById("shop-items");
-  const inventoryList = document.getElementById("inventoryList");
+  <div id="toast"></div>
 
-  // Создание грядок
-  function renderGarden() {
-    gardenEl.innerHTML = "";
-    garden.forEach((plant, index) => {
-      const bed = document.createElement("div");
-      bed.className = "bed";
-      bed.onclick = () => plantSeed(index);
-      if (plant) {
-        const plantEl = document.createElement("div");
-        plantEl.className = "plant";
-        plantEl.textContent = plant.img;
-        bed.appendChild(plantEl);
-      }
-      gardenEl.appendChild(bed);
-    });
-  }
+  <!-- Магазин -->
+  <div id="shopModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeShop()">&times;</span>
+      <h2>Магазин</h2>
+      <button onclick="buySeed('Морковь')">Купить семена моркови (5💰)</button><br>
+      <button onclick="buySeed('Клубника')">Купить семена клубники (10💰)</button><br>
+      <button onclick="buySeed('Виноград')">Купить семена винограда (15💰)</button><br>
+      <button onclick="buySeed('Тыква-великан')">Купить семена тыквы-великана (50💰)</button><br>
+      <button onclick="buyWater()">Купить воду (2💰)</button><br>
+      <hr>
+      <button onclick="sellAll()">Продать всё</button>
+    </div>
+  </div>
 
-  // Магазин
-  function renderShop() {
-    shopItemsEl.innerHTML = "";
-    for (let key in plants) {
-      const p = plants[key];
-      const btn = document.createElement("button");
-      btn.textContent = `${p.name} - ${p.price}💰`;
-      btn.onclick = () => { selectedSeed = key; };
-      shopItemsEl.appendChild(btn);
-    }
-  }
+  <!-- Инвентарь -->
+  <div id="invModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeInventory()">&times;</span>
+      <h2>Инвентарь</h2>
+      <div id="inventoryList"></div>
+    </div>
+  </div>
 
-  // Посадка
-  function plantSeed(index) {
-    if (!selectedSeed) return;
-    if (garden[index]) return;
+  <!-- Настройки -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeSettings()">&times;</span>
+      <h2>Настройки</h2>
+      <button onclick="resetGame()">Сброс прогресса</button>
+    </div>
+  </div>
 
-    const plantData = plants[selectedSeed];
-    if (money < plantData.price) {
-      alert("Недостаточно монет!");
-      return;
-    }
-    money -= plantData.price;
-    moneyEl.textContent = money;
+  <script>
+    const gardenSize = 8;
+    let garden = [];
+    let money = parseInt(localStorage.getItem('money')) || 20;
+    let water = parseInt(localStorage.getItem('water')) || 3;
+    let inventory = JSON.parse(localStorage.getItem('inventory')) || {};
 
-    garden[index] = {
-      ...plantData,
-      plantedAt: Date.now(),
-      ready: false,
-      index: index
+    const plants = {
+      "Морковь": {growTime: 10, pricePerKg: 5, minWeight: 1, maxWeight: 3},
+      "Клубника": {growTime: 15, pricePerKg: 8, minWeight: 0.5, maxWeight: 1.5, multiHarvest: 10},
+      "Виноград": {growTime: 20, pricePerKg: 6, minWeight: 2, maxWeight: 5},
+      "Тыква-великан": {growTime: 60, pricePerKg: 10, minWeight: 40, maxWeight: 80}
     };
 
-    renderGarden();
+    let selectedBed = null;
 
-    setTimeout(() => {
-      garden[index].ready = true;
-      renderGarden();
-    }, plantData.growTime);
-  }
-
-  // Сбор урожая
-  function harvest(index) {
-    const plant = garden[index];
-    if (!plant || !plant.ready) return;
-
-    // 🎲 Случайный вес
-    let weight = +(Math.random() * 10 + 1).toFixed(2);
-
-    // 🏆 Маленький шанс на "супер-тяжёлый"
-    if (Math.random() < 0.05) {
-      weight = +(weight * 5).toFixed(2);
+    function saveGame() {
+      localStorage.setItem('money', money);
+      localStorage.setItem('water', water);
+      localStorage.setItem('inventory', JSON.stringify(inventory));
+      localStorage.setItem('garden', JSON.stringify(garden));
     }
 
-    const value = Math.floor(weight * plant.basePricePerKg);
+    function loadGame() {
+      garden = JSON.parse(localStorage.getItem('garden')) || Array(gardenSize).fill(null).map(()=>({plant:null,growth:0}));
+    }
 
-    inventory.push({
-      name: plant.name,
-      weight: weight,
-      value: value,
-      img: plant.img
-    });
+    function updateUI() {
+      document.getElementById('money').textContent = money;
+      document.getElementById('water').textContent = water;
+      const gardenDiv = document.getElementById('garden');
+      gardenDiv.innerHTML = "";
+      garden.forEach((bed,i)=>{
+        const bedDiv=document.createElement('div');
+        bedDiv.className='bed';
+        bedDiv.onclick=()=>{selectedBed=i; showToast("Выбрана грядка "+(i+1));};
+        if(bed.plant){
+          const bar=document.createElement('div');
+          bar.className='growth-bar';
+          bar.style.width=bed.growth+"%";
+          bedDiv.appendChild(bar);
+          const plantEl=document.createElement('div');
+          plantEl.className='plant';
+          plantEl.textContent=bed.plant;
+          plantEl.style.transform="scale("+(0.5+bed.growth/100)+")";
+          bedDiv.appendChild(plantEl);
+        } else {
+          bedDiv.textContent="Пусто";
+        }
+        gardenDiv.appendChild(bedDiv);
+      });
+      saveGame();
+    }
 
-    // очистка грядки
-    garden[index] = null;
-    renderGarden();
-    updateInventory();
-  }
+    function showToast(msg){
+      const t=document.getElementById('toast');
+      t.textContent=msg;
+      t.style.display='block';
+      setTimeout(()=>{t.style.display='none';},2000);
+    }
 
-  // Обновление инвентаря
-  function updateInventory() {
-    inventoryList.innerHTML = "";
-    inventory.forEach((item, i) => {
-      const li = document.createElement("li");
-      li.textContent = `${item.img} ${item.name} — ${item.weight} кг — ${item.value}💰`;
-      const sellBtn = document.createElement("button");
-      sellBtn.textContent = "Продать";
-      sellBtn.onclick = () => sellItem(i);
-      li.appendChild(sellBtn);
-      inventoryList.appendChild(li);
-    });
-  }
+    function waterPlant(){
+      if(selectedBed===null) return showToast("Выберите грядку!");
+      if(water<=0) return showToast("Нет воды!");
+      if(!garden[selectedBed].plant) return showToast("Нечего поливать!");
+      water--;
+      garden[selectedBed].growth+=20;
+      if(garden[selectedBed].growth>100) garden[selectedBed].growth=100;
+      updateUI();
+    }
 
-  function sellItem(i) {
-    money += inventory[i].value;
-    moneyEl.textContent = money;
-    inventory.splice(i, 1);
-    updateInventory();
-  }
+    function openPlantMenu(){
+      if(selectedBed===null) return showToast("Выберите грядку!");
+      let seeds=Object.keys(inventory).filter(k=>inventory[k].seeds>0);
+      if(seeds.length===0) return showToast("Нет семян!");
+      let choice=prompt("Что посадить? Доступно: "+seeds.join(", "));
+      if(choice && plants[choice]){
+        if(inventory[choice].seeds<=0) return showToast("Нет семян "+choice);
+        garden[selectedBed]={plant:choice,growth:0};
+        inventory[choice].seeds--;
+        updateUI();
+      }
+    }
 
-  // Модалки
-  function openInventory() {
-    document.getElementById("inventoryModal").style.display = "block";
-  }
-  function closeInventory() {
-    document.getElementById("inventoryModal").style.display = "none";
-  }
+    function harvestPlant(){
+      if(selectedBed===null) return showToast("Выберите грядку!");
+      let bed=garden[selectedBed];
+      if(!bed.plant) return showToast("Тут ничего нет");
+      if(bed.growth<100) return showToast("Растение ещё не созрело");
+      const plant=plants[bed.plant];
+      let weight=+(plant.minWeight+Math.random()*(plant.maxWeight-plant.minWeight)).toFixed(1);
+      let roll=Math.random();
+      if(roll<0.01){weight*=3; showToast("Невероятный урожай!");}
+      else if(roll<0.06){weight*=2; showToast("Большой урожай!");}
+      if(!inventory[bed.plant]) inventory[bed.plant]={seeds:0,harvest:0,weight:0};
+      inventory[bed.plant].harvest++;
+      inventory[bed.plant].weight+=weight;
+      bed.plant=null; bed.growth=0;
+      updateUI();
+    }
 
-  // Инициализация
-  renderGarden();
-  renderShop();
-</script>
+    function openShop(){document.getElementById('shopModal').style.display='flex';}
+    function closeShop(){document.getElementById('shopModal').style.display='none';}
+
+    function buySeed(name){
+      const prices={"Морковь":5,"Клубника":10,"Виноград":15,"Тыква-великан":50};
+      if(money<prices[name]) return showToast("Недостаточно денег");
+      money-=prices[name];
+      if(!inventory[name]) inventory[name]={seeds:0,harvest:0,weight:0};
+      inventory[name].seeds++;
+      updateUI();
+    }
+
+    function buyWater(){
+      if(money<2) return showToast("Недостаточно денег");
+      money-=2; water++; updateUI();
+    }
+
+    function sellAll(){
+      let total=0;
+      for(let plant in inventory){
+        if(inventory[plant].weight>0){
+          let plantData=plants[plant];
+          let earned=Math.round(inventory[plant].weight*plantData.pricePerKg);
+          total+=earned;
+          inventory[plant].harvest=0;
+          inventory[plant].weight=0;
+        }
+      }
+      money+=total;
+      showToast("Продано на "+total+" монет");
+      updateUI();
+    }
+
+    function openInventory(){
+      document.getElementById('invModal').style.display='flex';
+      const list=document.getElementById('inventoryList');
+      list.innerHTML="";
+      for(let plant in inventory){
+        list.innerHTML+=plant+": семян "+inventory[plant].seeds+", урожая "+inventory[plant].harvest+", вес "+inventory[plant].weight.toFixed(1)+" кг<br>";
+      }
+    }
+    function closeInventory(){document.getElementById('invModal').style.display='none';}
+
+    function openSettings(){document.getElementById('settingsModal').style.display='flex';}
+    function closeSettings(){document.getElementById('settingsModal').style.display='none';}
+    function resetGame(){
+      if(confirm("Точно сбросить?")){
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    function gameLoop(){
+      garden.forEach(bed=>{
+        if(bed.plant && bed.growth<100){
+          bed.growth+=0.5;
+          if(bed.growth>100) bed.growth=100;
+        }
+      });
+      updateUI();
+    }
+
+    loadGame();
+    updateUI();
+    setInterval(gameLoop,1000);
+  </script>
 </body>
 </html>
