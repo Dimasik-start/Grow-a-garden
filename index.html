@@ -1,108 +1,196 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Вырасти сад</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Вырасти сад — случайный вес & цена/кг</title>
 <style>
-:root{--bg:#eef6ef;--card:#fff;--accent:#4caf50;--muted:#6b7280;--warn:#f87171}
-body{margin:0;font-family:sans-serif;background:var(--bg);display:flex;justify-content:center;padding:20px}
-.wrap{max-width:900px;width:100%}
-header{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+:root{
+  --bg:#eef6ef;
+  --card:#fff;
+  --accent:#4caf50;
+  --muted:#6b7280;
+  --warn:#f87171;
+  --shadow: rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);display:flex;justify-content:center;padding:20px}
+.wrap{max-width:1100px;width:100%}
+header{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:center}
 .stats{display:flex;gap:12px;align-items:center}
-.stat{background:var(--card);padding:8px 12px;border-radius:12px;font-weight:600;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
-.garden{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;position:relative}
-.bed{background:linear-gradient(180deg,#f0fff0,#d6ffe0);padding:12px;border-radius:16px;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;border:1px solid rgba(34,197,94,0.2);transition:0.3s;box-shadow:0 4px 8px rgba(0,0,0,0.08);}
-.bed.selected{outline:3px solid rgba(74,222,128,0.4);box-shadow:0 10px 30px rgba(74,222,128,0.15)}
-.bed .soil{width:100%;height:48px;background:linear-gradient(180deg,#8b5a2b,#6b3f1f);border-radius:12px;margin-top:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;transition:0.3s}
-.bed .plant{position:absolute;top:14px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:0.3s}
-.bed .plant .emoji{font-size:32px;transition:transform 0.5s;}
-.bed .plant .leaves{display:block;transition:transform 0.5s;transform-origin:bottom center;}
-.bed .plant .stage{font-size:12px;color:#111;font-weight:600}
-.bed .plant .progress{width:80px;height:6px;background:#e6f4ea;border-radius:999px;overflow:hidden;display:block;margin-top:4px}
-.bed .plant .progress i{display:block;height:100%;background:linear-gradient(90deg,#34d399,#10b981);width:0%;transition:width 0.5s;}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;justify-content:center}
-.btn{padding:10px 16px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.1);font-weight:600;transition:0.2s}
-.btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.15)}
+.stat{background:var(--card);padding:8px 12px;border-radius:12px;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,0.05);min-width:110px;text-align:center}
+.board-wrap{display:flex;gap:18px;align-items:flex-start}
+.garden{
+  width: calc(4 * 140px + 3 * 12px);
+  display:grid;
+  grid-template-columns:repeat(4,140px);
+  grid-auto-rows:120px;
+  gap:12px;
+  background:transparent;
+  padding:6px;
+  border-radius:12px;
+}
+.cell{
+  background:linear-gradient(180deg,#f7fff7,#e8fff0);
+  border-radius:12px;
+  border:1px solid rgba(34,197,94,0.12);
+  position:relative;
+  overflow:visible;
+  box-shadow:0 4px 10px var(--shadow);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  cursor:pointer;
+  user-select:none;
+  padding-bottom:6px;
+}
+.cell .soil{width:90%;height:36px;background:linear-gradient(180deg,#8b5a2b,#6b3f1f);border-radius:8px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.cell.selected{outline:3px solid rgba(74,222,128,0.28);box-shadow:0 10px 30px rgba(74,222,128,0.06)}
+.plant-el{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  transform-origin:center;
+  transition:transform .25s, box-shadow .25s;
+}
+.plant-el.big{z-index:5;filter:drop-shadow(0 10px 30px rgba(0,0,0,0.18))}
+.plant-el .emoji{font-size:34px;transition:transform .25s}
+.plant-el .stage{font-size:13px;font-weight:700;margin-top:6px}
+.plant-el .progress{width:88px;height:8px;background:#e6f4ea;border-radius:999px;margin-top:6px;overflow:hidden}
+.plant-el .progress i{display:block;height:100%;background:linear-gradient(90deg,#34d399,#10b981);width:0%;transition:width .4s}
+.controls{display:flex;flex-direction:column;gap:10px}
+.buttons{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:8px 12px;border-radius:10px;border:none;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.06);font-weight:700;background:#fff}
 .btn.primary{background:linear-gradient(90deg,var(--accent),#60a5fa);color:#fff}
-.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;padding:18px;border-radius:12px;display:none;box-shadow:0 10px 30px rgba(0,0,0,0.3);width:360px;z-index:10;max-height:80%;overflow:auto;}
+.btn:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,0.12)}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;padding:14px;border-radius:12px;display:none;box-shadow:0 16px 40px rgba(0,0,0,0.2);width:420px;z-index:80;max-height:80%;overflow:auto}
 .modal.open{display:block}
-.shop-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #ccc}
-.shop-row:last-child{border-bottom:none}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--warn);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:0.5s;z-index:20}.toast.show{opacity:1;pointer-events:auto}
-.water-drop{position:absolute;width:8px;height:12px;background:rgba(59,130,246,0.8);border-radius:50%;animation:fall 0.6s linear;pointer-events:none;}
-@keyframes fall{0%{transform:translateY(0);}100%{transform:translateY(100px);opacity:0;}}
-.seed-select{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
-.seed-option{padding:6px 10px;background:#d1fae5;border-radius:8px;cursor:pointer;transition:0.2s}
-.seed-option:hover{background:#34d399;color:#fff;}
+.shop-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #eee}
+.seed-option{padding:8px 10px;background:#f0f9f4;border-radius:8px;cursor:pointer;margin:6px 6px 0 0;display:inline-block}
+.seed-option:hover{background:#dff4e6}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--warn);color:#fff;padding:8px 12px;border-radius:10px;opacity:0;pointer-events:none;transition:all .4s;z-index:200}
+.toast.show{opacity:1;pointer-events:auto}
+.water-drop{position:absolute;width:8px;height:12px;background:rgba(59,130,246,0.9);border-radius:50%;animation:fall .6s linear;pointer-events:none;opacity:0.95}
+@keyframes fall{0%{transform:translateY(0);opacity:1}100%{transform:translateY(120px);opacity:0}}
+.inv{width:340px}
+.inv .panel{background:var(--card);padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+.inv .section{margin-bottom:10px}
+.small{font-size:12px;color:var(--muted)}
+.legend{display:flex;gap:8px;align-items:center;margin-top:8px}
+.large-emoji{font-size:34px}
+.weight-badge{display:inline-block;background:#fff;padding:4px 8px;border-radius:999px;box-shadow:0 4px 10px rgba(0,0,0,0.06);font-weight:700;margin-left:6px}
+.tooltip{position:absolute;background:#111;color:#fff;padding:6px 8px;border-radius:6px;font-size:12px;transform:translate(-50%,-110%);white-space:nowrap;display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header>
-<div class="stats">
-<div class="stat">💧 <span id="water">0</span></div>
-<div class="stat">💰 <span id="money">0</span></div>
-</div>
-<div>
-<button id="openShop" class="btn">🛒 Магазин</button>
-<button id="openInventory" class="btn">🎒 Инвентарь</button>
-<button id="openSettings" class="btn">⚙️ Настройки</button>
-</div>
-</header>
+  <header>
+    <div class="stats">
+      <div class="stat">💧 <span id="water">0</span></div>
+      <div class="stat">💰 <span id="money">0</span></div>
+    </div>
+    <div class="buttons center">
+      <button id="openShop" class="btn">🛒 Магазин</button>
+      <button id="openInventory" class="btn">🎒 Инвентарь</button>
+      <button id="openSettings" class="btn">⚙️ Настройки</button>
+    </div>
+  </header>
 
-<div class="garden" id="garden"></div>
+  <div class="board-wrap">
+    <div id="garden" class="garden" aria-label="Сад"></div>
 
-<div class="controls">
-<button id="plantBtn" class="btn primary">Посадить</button>
-<button id="waterBtn" class="btn primary">Полить</button>
-<button id="harvestBtn" class="btn primary">Собрать урожай</button>
-</div>
+    <div class="inv">
+      <div class="panel">
+        <div class="section">
+          <div class="small">Действия</div>
+          <div style="margin-top:8px;">
+            <button id="plantBtn" class="btn primary">Посадить</button>
+            <button id="waterBtn" class="btn primary">Полить</button>
+            <button id="harvestBtn" class="btn primary">Собрать урожай</button>
+          </div>
+        </div>
 
-<div id="seedModal" class="modal">
-<h3>Выберите семя для посадки</h3>
-<div id="seedOptions" class="seed-select"></div>
-<button id="closeSeedModal" class="btn" style="margin-top:8px;">Отмена</button>
-</div>
+        <div class="section">
+          <div class="small">Инвентарь — Семена</div>
+          <div id="inventorySeeds" style="margin-top:8px"></div>
+        </div>
 
-<div id="shop" class="modal">
-<h3>Магазин</h3>
-<div style="display:flex;gap:10px;margin-bottom:10px;">
-<button id="tabShop" class="btn primary">Shop</button>
-<button id="tabSell" class="btn primary">Sell</button>
-</div>
-<div id="shopContent"></div>
-<button id="closeShop" class="btn" style="margin-top:8px;">Закрыть</button>
-</div>
+        <div class="section">
+          <div class="small">Инвентарь — Урожай</div>
+          <div id="inventoryHarvest" style="margin-top:8px"></div>
+          <div style="margin-top:8px" class="small">Общий вес: <span id="totalWeight">0</span> кг</div>
+        </div>
 
-<div id="inventory" class="modal">
-<h3>Инвентарь</h3>
-<h4>Семена</h4>
-<div id="inventorySeeds"></div>
-<h4>Урожай</h4>
-<div id="inventoryHarvest"></div>
-<button id="closeInventory" class="btn" style="margin-top:8px;">Закрыть</button>
-</div>
+        <div class="section small">
+          <div>Подсказка: клик по клетке — выбрать. При посадке учитывается размер растения (тыква 2×2).</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<div id="settings" class="modal">
-<h3>Настройки</h3>
-<button id="resetBtn" class="btn">Сбросить прогресс</button>
-<button id="closeSettings" class="btn" style="margin-top:8px;">Закрыть</button>
-</div>
+  <!-- Seed modal -->
+  <div id="seedModal" class="modal" role="dialog" aria-modal="true">
+    <h3>Выберите семя для посадки</h3>
+    <div id="seedOptions" style="margin-top:8px"></div>
+    <div style="text-align:right;margin-top:10px"><button id="closeSeedModal" class="btn">Отмена</button></div>
+  </div>
 
-<div id="toast" class="toast"></div>
+  <!-- Shop modal -->
+  <div id="shop" class="modal">
+    <h3>Магазин</h3>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button id="tabShop" class="btn primary">Shop</button>
+      <button id="tabSell" class="btn">Sell</button>
+    </div>
+    <div id="shopContent"></div>
+    <div style="text-align:right;margin-top:10px"><button id="closeShop" class="btn">Закрыть</button></div>
+  </div>
+
+  <!-- Inventory modal -->
+  <div id="inventory" class="modal">
+    <h3>Инвентарь</h3>
+    <div style="margin-top:8px">
+      <div class="small">Семена</div>
+      <div id="invSeedsList" style="margin-top:8px"></div>
+      <hr />
+      <div class="small">Урожай (подробно)</div>
+      <div id="invHarvestList" style="margin-top:8px"></div>
+      <div style="text-align:right;margin-top:10px"><button id="closeInventory" class="btn">Закрыть</button></div>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settings" class="modal">
+    <h3>Настройки</h3>
+    <div style="margin-top:8px">
+      <button id="resetBtn" class="btn">Сбросить прогресс (очистить localStorage)</button>
+    </div>
+    <div style="text-align:right;margin-top:10px"><button id="closeSettings" class="btn">Закрыть</button></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+</div>
 
 <script>
-const GARDEN_SIZE=8;
-let garden=[], inventory=[], selectedBed=null;
-let money=parseInt(localStorage.getItem('money'))||20;
-let water=parseInt(localStorage.getItem('water'))||2;
+// ======================
+// Конфигурация и данные
+// ======================
+const COLS = 4;
+const ROWS = 2; // 4x2 = 8 клеток
+const CELL_COUNT = COLS * ROWS;
 
+let money = parseInt(localStorage.getItem('money')) || 20;
+let water = parseInt(localStorage.getItem('water')) || 2;
+
+// plantsData: size = {w,h} in cells, weight in kg (base range will be randomized on harvest), growRate in % per second, pricePerKg
 const plantsData = {
-  'Морковь': {growRate:5, price:10, maxHarvest:1, cost:5},
-  'Клубника': {growRate:2, price:5, maxHarvest:10, cost:10},
-  'Виноград': {growRate:1, price:15, maxHarvest:15, cost:25},
-  'Тыква-великан': {growRate:0.33, price:100, maxHarvest:1, cost:50}
+  'Морковь':        { growRate:5,    pricePerKg:5,   maxHarvest:1,  cost:5,  weightRange:[1,3],   size:{w:1,h:1} },
+  'Клубника':       { growRate:2,    pricePerKg:8,   maxHarvest:10, cost:10, weightRange:[0.5,1.5], size:{w:1,h:1} },
+  'Виноград':       { growRate:1,    pricePerKg:6,   maxHarvest:15, cost:25, weightRange:[2,5],   size:{w:1,h:2} },
+  'Тыква-великан':  { growRate:0.33, pricePerKg:10,  maxHarvest:1,  cost:50, weightRange:[40,80], size:{w:2,h:2} }
 };
 
 const emojiMap = {
@@ -112,233 +200,612 @@ const emojiMap = {
   'Тыква-великан':'🎃'
 };
 
-const gardenEl=document.getElementById('garden');
-const toastEl=document.getElementById('toast');
-const inventorySeedsEl=document.getElementById('inventorySeeds');
-const inventoryHarvestEl=document.getElementById('inventoryHarvest');
-const waterEl=document.getElementById('water');
-const moneyEl=document.getElementById('money');
-const seedModal=document.getElementById('seedModal');
-const seedOptions=document.getElementById('seedOptions');
-const shop=document.getElementById('shop'); 
-const shopContent=document.getElementById('shopContent'); 
-const tabShop=document.getElementById('tabShop'); 
-const tabSell=document.getElementById('tabSell');
+// State structures
+// cells: array length CELL_COUNT, each cell: { plantId: null | id, isRoot: bool }
+// plants: map id -> { id, type, x, y, size:{w,h}, progress, harvestedCount }
+let cells = [];
+let plants = {}; // id => plant object
+let plantIdCounter = 1;
+let inventory = []; // items: seeds => {type, amount?}, harvested => {type, harvested:true, weight}
+let selectedIndex = null; // selected cell index
+const toastTimeout = 2000;
 
-function showToast(msg){toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(()=>{toastEl.classList.remove('show');},2000);}
-function saveProgress(){localStorage.setItem('money',money);localStorage.setItem('water',water);localStorage.setItem('garden',JSON.stringify(garden.map(b=>b.plant)));localStorage.setItem('inventory',JSON.stringify(inventory));}
+// DOM refs
+const gardenEl = document.getElementById('garden');
+const moneyEl = document.getElementById('money');
+const waterEl = document.getElementById('water');
+const toastEl = document.getElementById('toast');
+const seedModal = document.getElementById('seedModal');
+const seedOptions = document.getElementById('seedOptions');
+const shop = document.getElementById('shop');
+const shopContent = document.getElementById('shopContent');
+const inventorySeedsEl = document.getElementById('inventorySeeds');
+const inventoryHarvestEl = document.getElementById('inventoryHarvest');
+const totalWeightEl = document.getElementById('totalWeight');
+const invSeedsList = document.getElementById('invSeedsList');
+const invHarvestList = document.getElementById('invHarvestList');
 
-function resetGame(){
-    money=20; water=2; inventory=[]; garden=[]; selectedBed=null;
-    localStorage.clear(); createBeds(); initStartSeed(); updateUI();
-    showToast('Игра сброшена!');
+// ======================
+// Utilities
+// ======================
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=> toastEl.classList.remove('show'), toastTimeout);
 }
 
-function initStartSeed(){inventory.push({type:'Морковь'});}
+function rand(min, max, fixed=1){
+  return +(min + Math.random()*(max-min)).toFixed(fixed);
+}
 
-function createBeds(){
-    gardenEl.innerHTML='';
-    const savedGarden=JSON.parse(localStorage.getItem('garden')||'[]');
-    const savedInventory=JSON.parse(localStorage.getItem('inventory')||'[]');
-    inventory=[]; savedInventory.forEach(i=>inventory.push(i));
-    if(inventory.length===0) initStartSeed();
-    for(let i=0;i<GARDEN_SIZE;i++){
-        const bed={plant:savedGarden[i]||null};
-        garden.push(bed);
-        const div=document.createElement('div');
-        div.className='bed'; div.id='bed-'+i; div.innerHTML='<div class="soil">Пусто</div>';
-        div.addEventListener('click',()=>{selectedBed=i;updateUI();});
-        gardenEl.appendChild(div);
+// generate random weight for a plant at harvest time and possibly rare multipliers
+function generateHarvestWeight(type){
+  const data = plantsData[type];
+  if(!data) return 1;
+  const [minW, maxW] = data.weightRange;
+  let w = rand(minW, maxW, 1);
+
+  // rare multipliers:
+  const roll = Math.random();
+  if(roll < 0.01){ // 1% -> x3
+    w = +(w * 3).toFixed(1);
+    showToast(`🎉 Ура! Редкий бонус: ${type} в 3 раза тяжелее!`);
+  } else if(roll < 0.06){ // next 5% -> x2
+    w = +(w * 2).toFixed(1);
+    showToast(`✨ Везение! ${type} удвоился в весе!`);
+  }
+  return w;
+}
+
+// save/load
+function saveAll(){
+  localStorage.setItem('money', money);
+  localStorage.setItem('water', water);
+  localStorage.setItem('cells', JSON.stringify(cells));
+  localStorage.setItem('plants', JSON.stringify(plants));
+  localStorage.setItem('inventory', JSON.stringify(inventory));
+  localStorage.setItem('plantIdCounter', plantIdCounter);
+}
+
+function loadAll(){
+  money = parseInt(localStorage.getItem('money')) || money;
+  water = parseInt(localStorage.getItem('water')) || water;
+  const savedCells = JSON.parse(localStorage.getItem('cells')||'null');
+  const savedPlants = JSON.parse(localStorage.getItem('plants')||'null');
+  const savedInv = JSON.parse(localStorage.getItem('inventory')||'null');
+  const savedCounter = parseInt(localStorage.getItem('plantIdCounter')) || null;
+  if(savedCells && Array.isArray(savedCells) && savedPlants){
+    cells = savedCells;
+    plants = savedPlants;
+    if(savedInv) inventory = savedInv;
+    if(savedCounter) plantIdCounter = savedCounter;
+    return true;
+  }
+  return false;
+}
+
+function resetAll(){
+  if(!confirm('Сбросить прогресс и очистить всё?')) return;
+  money = 20; water = 2;
+  cells = Array(CELL_COUNT).fill(null).map(()=>({plantId:null,isRoot:false}));
+  plants = {};
+  plantIdCounter = 1;
+  inventory = [{type:'Морковь', amount:1}];
+  selectedIndex = null;
+  localStorage.clear();
+  renderGarden();
+  updateUI();
+  showToast('Прогресс сброшен');
+}
+
+// helper convert idx <-> xy
+function idxToXY(idx){
+  const x = (idx % COLS);
+  const y = Math.floor(idx / COLS);
+  return {x,y};
+}
+function xyToIdx(x,y){
+  if(x<0||x>=COLS||y<0||y>=ROWS) return -1;
+  return y*COLS + x;
+}
+function inBounds(x,y,w,h){
+  if(x<0||y<0) return false;
+  if(x + w > COLS) return false;
+  if(y + h > ROWS) return false;
+  return true;
+}
+
+// can place area free?
+function canPlaceArea(rootX,rootY,w,h){
+  if(!inBounds(rootX,rootY,w,h)) return false;
+  for(let dy=0; dy<h; dy++){
+    for(let dx=0; dx<w; dx++){
+      const idx = xyToIdx(rootX+dx, rootY+dy);
+      if(cells[idx].plantId !== null) return false;
     }
+  }
+  return true;
 }
 
-function updateUI(){
-    waterEl.textContent = water;
-    moneyEl.textContent = money;
-    garden.forEach((b,i)=>{
-        const el = document.getElementById('bed-'+i);
-        el.classList.toggle('selected', selectedBed===i);
-        const plantEl = el.querySelector('.plant');
-        const soilEl = el.querySelector('.soil');
-        if(!b.plant){if(plantEl) plantEl.remove(); soilEl.textContent='Пусто';} 
-        else {
-            soilEl.textContent='';
-            if(!plantEl){
-                const div=document.createElement('div');
-                div.className='plant';
-                div.innerHTML=`<div class="leaves">🌿</div><div class="emoji">${emojiMap[b.plant.type]}</div>
-                <div class="stage">${b.plant.progress||0}%</div>
-                <div class="progress"><i style="width:${b.plant.progress||0}%"></i></div>`;
-                el.appendChild(div);
-            } else {
-                plantEl.querySelector('.progress i').style.width=(b.plant.progress||0)+'%';
-                plantEl.querySelector('.stage').textContent=Math.floor(b.plant.progress||0)+'%';
-                const leaves=el.querySelector('.leaves');
-                if(leaves) leaves.style.transform=`translateY(${-(b.plant.progress/5)}px) rotate(${Math.sin(Date.now()/500)*10}deg)`;
-                const scale=0.5+0.5*(b.plant.progress/100);
-                el.querySelector('.plant .emoji').style.transform=`scale(${scale})`;
-            }
-        }
-    });
-    renderInventory();
-    saveProgress();
-}
-
-function renderInventory(){
-    const seedsCount={}, harvestCount={};
-    inventory.forEach(item=>{
-        if(item.harvested) harvestCount[item.type]=harvestCount[item.type]?harvestCount[item.type]+1:1;
-        else seedsCount[item.type]=seedsCount[item.type]?seedsCount[item.type]+1:1;
-    });
-    inventorySeedsEl.innerHTML=''; for(const key in seedsCount) inventorySeedsEl.innerHTML+=`${key} x ${seedsCount[key]}<br>`;
-    inventoryHarvestEl.innerHTML=''; for(const key in harvestCount) inventoryHarvestEl.innerHTML+=`${key} x ${harvestCount[key]}<br>`;
-}
-
-function plantSeed(){
-    if(selectedBed===null){showToast('Выберите грядку');return;}
-    const b=garden[selectedBed]; if(b.plant){showToast('Грядка занята');return;}
-    const seedTypes = inventory.filter(i=>!i.harvested).map(i=>i.type);
-    const uniqueTypes=[...new Set(seedTypes)];
-    if(uniqueTypes.length===0){showToast('Нет семян');return;}
-    if(uniqueTypes.length===1) plantChosen(uniqueTypes[0]);
-    else {
-        seedOptions.innerHTML=''; uniqueTypes.forEach(type=>{
-            const btn=document.createElement('div'); btn.className='seed-option'; btn.textContent=type;
-            btn.addEventListener('click',()=>plantChosen(type));
-            seedOptions.appendChild(btn);
-        });
-        seedModal.classList.add('open');
+function occupyArea(rootX,rootY,w,h, plantId){
+  for(let dy=0; dy<h; dy++){
+    for(let dx=0; dx<w; dx++){
+      const idx = xyToIdx(rootX+dx, rootY+dy);
+      cells[idx].plantId = plantId;
+      cells[idx].isRoot = (dx===0 && dy===0);
     }
+  }
+}
+function freePlantArea(plantId){
+  for(let i=0;i<CELL_COUNT;i++){
+    if(cells[i].plantId === plantId){
+      cells[i].plantId = null;
+      cells[i].isRoot = false;
+    }
+  }
 }
 
-function plantChosen(type){
-    const idx=inventory.findIndex(i=>i.type===type && !i.harvested);
-    if(idx!==-1){
-        inventory.splice(idx,1);
-        const data=plantsData[type];
-        garden[selectedBed].plant={type:type,maxHarvest:data.maxHarvest,progress:0,harvestedCount:0};
+// ======================
+// Render garden and plants
+// ======================
+function renderGarden(){
+  gardenEl.innerHTML = '';
+  // create cell nodes
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      const idx = xyToIdx(x,y);
+      const div = document.createElement('div');
+      div.className = 'cell';
+      div.dataset.idx = idx;
+      div.dataset.x = x; div.dataset.y = y;
+      div.innerHTML = '<div class="soil">Пусто</div>';
+      div.addEventListener('click', ()=> {
+        selectedIndex = idx;
         updateUI();
-        seedModal.classList.remove('open');
+      });
+      // tooltip
+      const tip = document.createElement('div'); tip.className='tooltip'; tip.style.left='50%';
+      div.appendChild(tip);
+      gardenEl.appendChild(div);
     }
+  }
+  // render plant elements (for roots only)
+  renderPlantsElements();
 }
 
-function waterBed(){
-    if(selectedBed===null){showToast('Выберите грядку');return;}
-    const b=garden[selectedBed];
-    if(!b.plant){showToast('Нет растения');return;}
-    if(water<=0){showToast('Воды нет');return;}
-    water--; b.plant.progress=Math.min(100,(b.plant.progress||0)+20);
-    createWaterDrops(document.getElementById('bed-'+selectedBed)); updateUI();
+function renderPlantsElements(){
+  // remove existing plant elements that are direct children (old ones)
+  const existing = gardenEl.querySelectorAll('.plant-el');
+  existing.forEach(n=>n.remove());
+
+  for(const idStr in plants){
+    const plant = plants[idStr];
+    const el = document.createElement('div');
+    el.className = 'plant-el';
+    el.dataset.plantId = plant.id;
+    const baseWeight = averageWeightForType(plant.type);
+    if(baseWeight >= 3) el.classList.add('big');
+    // compute grid placement via inline styles
+    el.style.gridColumnStart = (plant.x + 1);
+    el.style.gridColumnEnd = `span ${plant.size.w}`;
+    el.style.gridRowStart = (plant.y + 1);
+    el.style.gridRowEnd = `span ${plant.size.h}`;
+    const emoji = emojiMap[plant.type] || '🌱';
+    el.innerHTML = `<div class="emoji">${emoji}</div>
+                    <div class="stage">${Math.floor(plant.progress||0)}%</div>
+                    <div class="progress"><i style="width:${plant.progress||0}%"></i></div>`;
+    gardenEl.appendChild(el);
+  }
 }
 
-function createWaterDrops(bedEl){
-    if(!bedEl) return;
-    for(let i=0;i<5;i++){
-        const drop=document.createElement('div'); drop.className='water-drop';
-        drop.style.left=(10+Math.random()*60)+'px';
-        drop.style.animationDelay=(i*0.1)+'s';
-        bedEl.appendChild(drop); setTimeout(()=>{drop.remove();},600);
-    }
+// average weight helper (midpoint) — used for visual scale decisions
+function averageWeightForType(type){
+  const data = plantsData[type];
+  if(!data) return 0.5;
+  const [minW,maxW] = data.weightRange;
+  return (minW + maxW) / 2;
 }
 
-function harvestSelected(){
-    if(selectedBed===null){showToast('Выберите грядку');return;}
-    const b=garden[selectedBed]; 
-    if(!b.plant){showToast('Грядка пуста');return;}
-    if(b.plant.progress<100){showToast('Растение еще не выросло'); return;} 
-    if(!b.plant.harvestedCount) b.plant.harvestedCount=0;
+// ======================
+// Update UI: cells, plants, inventory
+// ======================
+function updateUI(){
+  // update resource panels
+  waterEl.textContent = water;
+  moneyEl.textContent = money;
 
-    inventory.push({type:b.plant.type, harvested:true});
-    b.plant.harvestedCount++;
-
-    if(b.plant.type==='Клубника'){
-        if(b.plant.harvestedCount < b.plant.maxHarvest){
-            b.plant.progress=0;
-        } else {
-            b.plant=null;
-        }
-    } else if(b.plant.type==='Тыква-великан' || b.plant.type==='Морковь'){
-        b.plant=null;
+  // update each cell: selection, soil text, tooltips
+  for(let i=0;i<CELL_COUNT;i++){
+    const cellDiv = gardenEl.querySelector(`.cell[data-idx="${i}"]`);
+    const plantId = cells[i].plantId;
+    const soil = cellDiv.querySelector('.soil');
+    const tip = cellDiv.querySelector('.tooltip');
+    if(plantId === null){
+      soil.textContent = 'Пусто';
+      tip.style.display = 'none';
     } else {
-        b.plant=null;
+      if(cells[i].isRoot){
+        const plant = plants[plantId];
+        soil.textContent = '';
+        tip.textContent = `${plant.type} — ${Math.round(plant.progress||0)}%`;
+        tip.style.display = 'none';
+      } else {
+        soil.textContent = '';
+        tip.textContent = 'Занято';
+        tip.style.display = 'none';
+      }
     }
+    // selection style
+    if(selectedIndex === i) cellDiv.classList.add('selected'); else cellDiv.classList.remove('selected');
+  }
 
-    updateUI();
+  // update plant elements' internals (progress, scale)
+  gardenEl.querySelectorAll('.plant-el').forEach(el=>{
+    const pid = el.dataset.plantId;
+    const p = plants[pid];
+    if(!p) return;
+    const prog = Math.round(p.progress||0);
+    const progressBar = el.querySelector('.progress i');
+    const stage = el.querySelector('.stage');
+    const emojiEl = el.querySelector('.emoji');
+    progressBar.style.width = prog + '%';
+    stage.textContent = prog + '%';
+    const baseWeight = averageWeightForType(p.type);
+    const progScale = 0.5 + 0.5 * (prog/100);
+    const weightFactor = Math.min(3.0, 1 + (baseWeight / 10));
+    const scale = progScale * weightFactor;
+    emojiEl.style.transform = `scale(${scale})`;
+    if(baseWeight >= 3) el.classList.add('big'); else el.classList.remove('big');
+  });
+
+  // render inventory lists and totals
+  renderInventory();
+
+  // save
+  saveAll();
 }
 
-// Авто-рост
-setInterval(()=>{
-    garden.forEach(b=>{
-        if(b.plant && b.plant.progress<100){
-            b.plant.progress=Math.min(100,(b.plant.progress||0)+plantsData[b.plant.type].growRate);
-            const el=document.getElementById('bed-'+garden.indexOf(b));
-            if(el){
-                const leaves=el.querySelector('.leaves');
-                if(leaves) leaves.style.transform=`translateY(${-(b.plant.progress/5)}px) rotate(${Math.sin(Date.now()/500)*10}deg)`;
-                const scale=0.5+0.5*(b.plant.progress/100);
-                el.querySelector('.plant .emoji').style.transform=`scale(${scale})`;
-            }
-        }
-    }); 
-    updateUI();
-},1000);
-
-// Магазин и Продажа
-function renderShop(){
-    shopContent.innerHTML='';
-    for(const key in plantsData){
-        const div=document.createElement('div'); div.className='shop-row'; div.textContent=key;
-        const btn=document.createElement('button'); btn.className='btn'; btn.textContent=`Купить 1 (${plantsData[key].cost}💰)`;
-        btn.addEventListener('click',()=>{
-            if(money<plantsData[key].cost){showToast('Нет денег');return;}
-            money-=plantsData[key].cost; inventory.push({type:key}); updateUI();
-        });
-        div.appendChild(btn); shopContent.appendChild(div);
+// ======================
+// Inventory rendering (seeds + harvest with weights + total weight)
+// ======================
+function renderInventory(){
+  // seeds
+  const seedAgg = {};
+  const harvestList = [];
+  inventory.forEach(it=>{
+    if(it.harvested) harvestList.push(it);
+    else {
+      const amt = it.amount || 1;
+      seedAgg[it.type] = (seedAgg[it.type]||0) + amt;
     }
-    const waterDiv=document.createElement('div'); waterDiv.className='shop-row'; waterDiv.textContent='Вода 💧';
-    const waterBtn=document.createElement('button'); waterBtn.className='btn'; waterBtn.textContent='Купить 1 (2💰)';
-    waterBtn.addEventListener('click',()=>{if(money<2){showToast('Нет денег');return;} money-=2; water+=1; updateUI();});
-    waterDiv.appendChild(waterBtn); shopContent.appendChild(waterDiv);
+  });
+
+  inventorySeedsEl.innerHTML = '';
+  if(Object.keys(seedAgg).length === 0) inventorySeedsEl.innerHTML = '<div class="small">Пусто</div>';
+  else {
+    for(const key in seedAgg){
+      const div = document.createElement('div');
+      div.textContent = `${key} x ${seedAgg[key]}`;
+      inventorySeedsEl.appendChild(div);
+    }
+  }
+
+  // harvest aggregate
+  inventoryHarvestEl.innerHTML = '';
+  const harvestAgg = {};
+  harvestList.forEach(it=>{
+    const w = it.weight || (plantsData[it.type] ? (plantsData[it.type].weightRange[0]+plantsData[it.type].weightRange[1])/2 : 0);
+    if(!harvestAgg[it.type]) harvestAgg[it.type] = {count:0,weight:0};
+    harvestAgg[it.type].count++;
+    harvestAgg[it.type].weight += w;
+  });
+
+  let totalWeight = 0;
+  if(Object.keys(harvestAgg).length === 0) inventoryHarvestEl.innerHTML = '<div class="small">Пусто</div>';
+  else {
+    for(const key in harvestAgg){
+      const obj = harvestAgg[key];
+      totalWeight += obj.weight;
+      const line = document.createElement('div');
+      line.textContent = `${key} x ${obj.count} — вес: ${obj.weight.toFixed(1)} кг`;
+      inventoryHarvestEl.appendChild(line);
+    }
+  }
+  totalWeightEl.textContent = totalWeight.toFixed(1);
+
+  // modal detailed lists
+  if(invSeedsList){
+    invSeedsList.innerHTML = '';
+    if(Object.keys(seedAgg).length === 0) invSeedsList.innerHTML = '<div class="small">Пусто</div>';
+    else {
+      for(const key in seedAgg){
+        const d = document.createElement('div'); d.textContent = `${key} x ${seedAgg[key]}`; invSeedsList.appendChild(d);
+      }
+    }
+  }
+  if(invHarvestList){
+    invHarvestList.innerHTML = '';
+    if(harvestList.length === 0) invHarvestList.innerHTML = '<div class="small">Пусто</div>';
+    else {
+      harvestList.forEach((it, idx)=>{
+        const d = document.createElement('div'); d.textContent = `${it.type} — ${it.weight.toFixed(1)} кг`; invHarvestList.appendChild(d);
+      });
+    }
+  }
+}
+
+// ======================
+// Planting logic (multicell-aware)
+// ======================
+function plantSeed(){
+  if(selectedIndex === null){ showToast('Выберите клетку для посадки'); return; }
+  const seedTypes = inventory.filter(i=>!i.harvested).map(i=>i.type);
+  const unique = [...new Set(seedTypes)];
+  if(unique.length === 0){ showToast('Нет семян'); return; }
+  if(unique.length === 1){
+    attemptPlant(unique[0], selectedIndex);
+    return;
+  }
+  seedOptions.innerHTML = '';
+  unique.forEach(type=>{
+    const btn = document.createElement('div'); btn.className='seed-option';
+    btn.textContent = `${type} (цена семени: ${plantsData[type].cost}💰)`;
+    btn.addEventListener('click', ()=> { attemptPlant(type, selectedIndex); seedModal.classList.remove('open'); });
+    seedOptions.appendChild(btn);
+  });
+  seedModal.classList.add('open');
+}
+
+function attemptPlant(type, idx){
+  const {x,y} = idxToXY(idx);
+  const size = plantsData[type].size || {w:1,h:1};
+  if(!inBounds(x,y,size.w,size.h)){
+    showToast('Не хватает места (вне границ)');
+    return;
+  }
+  if(!canPlaceArea(x,y,size.w,size.h)){
+    showToast('Клетки заняты — выберите другое место');
+    return;
+  }
+  // consume a seed item
+  const seedIdx = inventory.findIndex(i => !i.harvested && i.type === type);
+  if(seedIdx === -1){ showToast('Семя не найдено'); return; }
+  if(inventory[seedIdx].amount && inventory[seedIdx].amount > 1) inventory[seedIdx].amount--;
+  else inventory.splice(seedIdx,1);
+
+  // create plant object
+  const id = String(plantIdCounter++);
+  const plant = { id, type, x, y, size: {w:size.w,h:size.h}, progress:0, harvestedCount:0, maxHarvest: plantsData[type].maxHarvest || 1 };
+  plants[id] = plant;
+  occupyArea(x,y,size.w,size.h, id);
+  renderPlantsElements();
+  updateUI();
+  showToast(`${type} посажена`);
+}
+
+// ======================
+// Watering
+// ======================
+function waterBed(){
+  if(selectedIndex === null){ showToast('Выберите клетку'); return; }
+  const cell = cells[selectedIndex];
+  if(!cell || cell.plantId === null){ showToast('Нет растения'); return; }
+  if(water <= 0){ showToast('Воды нет'); return; }
+  const plant = plants[cell.plantId];
+  if(!plant){ showToast('Ошибка растения'); return; }
+  water--;
+  plant.progress = Math.min(100, (plant.progress||0) + 20);
+  createWaterDrops(selectedIndex);
+  updateUI();
+}
+
+function createWaterDrops(cellIdx){
+  const cellDiv = gardenEl.querySelector(`.cell[data-idx="${cellIdx}"]`);
+  if(!cellDiv) return;
+  for(let i=0;i<6;i++){
+    const d = document.createElement('div'); d.className='water-drop';
+    d.style.left = (10 + Math.random()*80) + 'px';
+    d.style.animationDelay = (i*0.06) + 's';
+    cellDiv.appendChild(d);
+    setTimeout(()=> d.remove(), 700);
+  }
+}
+
+// ======================
+// Harvesting with random weight & rare multipliers
+// ======================
+function harvestSelected(){
+  if(selectedIndex === null){ showToast('Выберите клетку'); return; }
+  const cell = cells[selectedIndex];
+  if(!cell || cell.plantId === null){ showToast('Нет растения'); return; }
+  const plant = plants[cell.plantId];
+  if(!plant){ showToast('Ошибка'); return; }
+  if(plant.progress < 100){ showToast('Растение ещё не выросло'); return; }
+
+  // generate random weight and apply rare multipliers inside function
+  const w = generateHarvestWeight(plant.type);
+
+  // Add harvested item to inventory with weight
+  inventory.push({ type: plant.type, harvested: true, weight: w });
+
+  plant.harvestedCount = (plant.harvestedCount||0) + 1;
+
+  if(plant.harvestedCount < plant.maxHarvest){
+    plant.progress = 0;
+    showToast(`${plant.type} собран (вес ${w} кг). Осталось сборов: ${plant.maxHarvest - plant.harvestedCount}`);
+  } else {
+    // remove plant and free area
+    freePlantArea(plant.id);
+    delete plants[plant.id];
+    showToast(`${plant.type} собран (вес ${w} кг) — растение закончено`);
+  }
+  updateUI();
+}
+
+// Helper wrapper to generate weight + chance messages
+function generateHarvestWeight(type){
+  const data = plantsData[type];
+  if(!data) return 1;
+  const [minW,maxW] = data.weightRange;
+  let w = +(minW + Math.random()*(maxW - minW)).toFixed(1);
+  // rare chances
+  const r = Math.random();
+  if(r < 0.01){ w = +(w * 3).toFixed(1); showToast(`🎉 Супер! ${type} в 3 раза тяжелее!`); }
+  else if(r < 0.06){ w = +(w * 2).toFixed(1); showToast(`✨ Повезло! ${type} удвоился в весе!`); }
+  return w;
+}
+
+// ======================
+// Auto-growth tick
+// ======================
+setInterval(()=>{
+  let changed = false;
+  for(const id in plants){
+    const p = plants[id];
+    if(p.progress < 100){
+      const rate = plantsData[p.type]?.growRate || 1;
+      p.progress = Math.min(100, (p.progress||0) + rate);
+      changed = true;
+    }
+  }
+  if(changed) updateUI();
+}, 1000);
+
+// ======================
+// Shop & Sell (price = weight * pricePerKg)
+// ======================
+function renderShop(){
+  shopContent.innerHTML = '';
+
+  // shop items
+  for(const key in plantsData){
+    const row = document.createElement('div'); row.className='shop-row';
+    const left = document.createElement('div'); left.textContent = `${key} — семя ${plantsData[key].cost}💰 — размер ${plantsData[key].size?.w || 1}×${plantsData[key].size?.h || 1}`;
+    const right = document.createElement('div');
+    const buyBtn = document.createElement('button'); buyBtn.className='btn'; buyBtn.textContent='Купить 1';
+    buyBtn.addEventListener('click', ()=>{
+      const cost = plantsData[key].cost || 0;
+      if(money < cost){ showToast('Нет денег'); return; }
+      money -= cost;
+      // add seed item (use amount aggregation)
+      const ex = inventory.find(it => !it.harvested && it.type === key && it.amount);
+      if(ex) ex.amount++;
+      else inventory.push({ type: key, amount: 1 });
+      updateUI();
+    });
+    right.appendChild(buyBtn);
+    row.appendChild(left); row.appendChild(right); shopContent.appendChild(row);
+  }
+
+  // water
+  const wrow = document.createElement('div'); wrow.className='shop-row';
+  wrow.innerHTML = '<div>Вода — 2💰</div>';
+  const wb = document.createElement('button'); wb.className='btn'; wb.textContent='Купить 1';
+  wb.addEventListener('click', ()=> { if(money < 2){ showToast('Нет денег'); return; } money -= 2; water += 1; updateUI(); });
+  wrow.appendChild(wb); shopContent.appendChild(wrow);
 }
 
 function renderSell(){
-    shopContent.innerHTML='';
-    const types=[...new Set(inventory.filter(i=>i.harvested).map(i=>i.type))];
-    types.forEach(type=>{
-        const div=document.createElement('div'); div.className='shop-row'; div.textContent=type;
-        const sellOne=document.createElement('button'); sellOne.className='btn'; sellOne.textContent='Продать 1';
-        sellOne.addEventListener('click',()=>{
-            const idx=inventory.findIndex(i=>i.type===type && i.harvested);
-            if(idx!==-1){inventory.splice(idx,1); money+=plantsData[type].price; updateUI();}
-            else showToast('Нет в инвентаре');
-        });
-        const sellAll=document.createElement('button'); sellAll.className='btn'; sellAll.textContent='Продать всё';
-        sellAll.addEventListener('click',()=>{
-            const all=inventory.filter(i=>i.type===type && i.harvested);
-            inventory=inventory.filter(i=>!(i.type===type && i.harvested));
-            money+=plantsData[type].price*all.length; updateUI();
-        });
-        div.appendChild(sellOne); div.appendChild(sellAll); shopContent.appendChild(div);
+  shopContent.innerHTML = '';
+  const harvestedTypes = [...new Set(inventory.filter(i=>i.harvested).map(i=>i.type))];
+  if(harvestedTypes.length === 0){
+    shopContent.innerHTML = '<div class="small">У вас нет собранного урожая для продажи</div>';
+    return;
+  }
+  harvestedTypes.forEach(type=>{
+    const row = document.createElement('div'); row.className='shop-row';
+    const left = document.createElement('div'); left.textContent = `${type} — цена/кг ${plantsData[type]?.pricePerKg || 0}💰`;
+    const right = document.createElement('div');
+    const sellOne = document.createElement('button'); sellOne.className='btn'; sellOne.textContent='Продать 1';
+    sellOne.addEventListener('click', ()=>{
+      const idx = inventory.findIndex(i => i.harvested && i.type === type);
+      if(idx === -1){ showToast('Нет в инвентаре'); return; }
+      const item = inventory[idx];
+      const income = Math.floor((item.weight || 0) * (plantsData[type]?.pricePerKg || 0));
+      inventory.splice(idx,1);
+      money += income;
+      showToast(`Продано ${type} за ${income}💰 (вес ${item.weight.toFixed(1)} кг)`);
+      updateUI();
     });
+    const sellAll = document.createElement('button'); sellAll.className='btn'; sellAll.textContent='Продать всё';
+    sellAll.addEventListener('click', ()=>{
+      const all = inventory.filter(i=>i.harvested && i.type === type);
+      if(all.length === 0){ showToast('Нет в инвентаре'); return; }
+      let sumIncome = 0;
+      inventory = inventory.filter(i => !(i.harvested && i.type === type));
+      all.forEach(it=> sumIncome += Math.floor((it.weight ||0) * (plantsData[type]?.pricePerKg || 0)));
+      money += sumIncome;
+      showToast(`Продан весь ${type} за ${sumIncome}💰`);
+      updateUI();
+    });
+    right.appendChild(sellOne); right.appendChild(sellAll);
+    row.appendChild(left); row.appendChild(right); shopContent.appendChild(row);
+  });
 }
 
-// События
-tabShop.addEventListener('click',renderShop); 
-tabSell.addEventListener('click',renderSell);
-document.getElementById('openShop').addEventListener('click',()=>{shop.classList.add('open'); renderShop();});
-document.getElementById('closeShop').addEventListener('click',()=>{shop.classList.remove('open');});
-document.getElementById('plantBtn').addEventListener('click',plantSeed);
-document.getElementById('waterBtn').addEventListener('click',waterBed);
-document.getElementById('harvestBtn').addEventListener('click',harvestSelected);
-document.getElementById('closeSeedModal').addEventListener('click',()=>{seedModal.classList.remove('open');});
-document.getElementById('openInventory').addEventListener('click',()=>{document.getElementById('inventory').classList.add('open');});
-document.getElementById('closeInventory').addEventListener('click',()=>{document.getElementById('inventory').classList.remove('open');});
-document.getElementById('openSettings').addEventListener('click',()=>{document.getElementById('settings').classList.add('open');});
-document.getElementById('closeSettings').addEventListener('click',()=>{document.getElementById('settings').classList.remove('open');});
-document.getElementById('resetBtn').addEventListener('click',resetGame);
+// ======================
+// Events / Buttons
+// ======================
+document.getElementById('openShop').addEventListener('click', ()=>{ shop.classList.add('open'); renderShop(); });
+document.getElementById('closeShop').addEventListener('click', ()=> shop.classList.remove('open'));
+document.getElementById('tabShop').addEventListener('click', renderShop);
+document.getElementById('tabSell').addEventListener('click', renderSell);
 
-createBeds();
-updateUI();
+document.getElementById('openInventory').addEventListener('click', ()=> document.getElementById('inventory').classList.add('open'));
+document.getElementById('closeInventory').addEventListener('click', ()=> document.getElementById('inventory').classList.remove('open'));
+
+document.getElementById('openSettings').addEventListener('click', ()=> document.getElementById('settings').classList.add('open'));
+document.getElementById('closeSettings').addEventListener('click', ()=> document.getElementById('settings').classList.remove('open'));
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+document.getElementById('plantBtn').addEventListener('click', plantSeed);
+document.getElementById('waterBtn').addEventListener('click', waterBed);
+document.getElementById('harvestBtn').addEventListener('click', harvestSelected);
+document.getElementById('closeSeedModal').addEventListener('click', ()=> seedModal.classList.remove('open'));
+
+// initial setup
+function initialSetup(){
+  const loaded = loadAll();
+  if(!loaded){
+    cells = Array(CELL_COUNT).fill(null).map(()=>({plantId:null,isRoot:false}));
+    plants = {};
+    inventory = [{type:'Морковь', amount:1}];
+    plantIdCounter = 1;
+    saveAll();
+  }
+  renderGarden();
+  updateUI();
+}
+initialSetup();
+
+// handy: close modals with Esc
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    seedModal.classList.remove('open');
+    shop.classList.remove('open');
+    document.getElementById('inventory').classList.remove('open');
+    document.getElementById('settings').classList.remove('open');
+  }
+});
+
+// tooltip on hover
+gardenEl.addEventListener('mousemove', (ev)=>{
+  const target = ev.target.closest('.cell');
+  if(!target){ gardenEl.querySelectorAll('.cell .tooltip').forEach(t=>t.style.display='none'); return; }
+  const idx = parseInt(target.dataset.idx);
+  const cell = cells[idx];
+  const tip = target.querySelector('.tooltip');
+  if(!tip) return;
+  if(cell && cell.plantId){
+    const plant = plants[cell.plantId];
+    if(plant){
+      tip.textContent = `${plant.type} — ${Math.round(plant.progress||0)}% — size ${plant.size.w}×${plant.size.h}`;
+      tip.style.display = 'block';
+    } else tip.style.display='none';
+  } else tip.style.display='none';
+});
+gardenEl.addEventListener('mouseleave', ()=> gardenEl.querySelectorAll('.cell .tooltip').forEach(t=>t.style.display='none'));
+
 </script>
 </body>
 </html>
